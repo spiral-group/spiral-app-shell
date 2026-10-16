@@ -1,0 +1,475 @@
+import { jsxs, jsx } from "react/jsx-runtime";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useViewport, useSound, useHaptic, useExpand, useFrame } from "@spiral/sdk";
+import { fitCanvas } from "@spiral/play";
+import { Stack, Row, Text, Fill, Grid, Button, Board, Only, List, Meta, Square, Input, Counter, Check, Choice, Progress, Avatar, Card, Hero } from "@spiral/ui";
+const CHESS = "rnbqkbnrpppppppp................................PPPPPPPPRNBQKBNR";
+const GLYPH = {
+  r: "♜",
+  n: "♞",
+  b: "♝",
+  q: "♛",
+  k: "♚",
+  p: "♟",
+  R: "♖",
+  N: "♘",
+  B: "♗",
+  Q: "♕",
+  K: "♔",
+  P: "♙"
+};
+const MOVES = ["e2-e4", "e7-e5", "Ng1-f3", "Nb8-c6", "Bf1-b5", "a7-a6", "Bb5-a4", "Ng8-f6"];
+const Chess = () => {
+  const [sel, setSel] = useState(null);
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsx(Text, { variant: "caption", children: "⚪ Андрій" }),
+      /* @__PURE__ */ jsx(Text, { variant: "body", children: "Хід білих" }),
+      /* @__PURE__ */ jsx(Text, { variant: "caption", children: "⚫ Emmm" })
+    ] }),
+    /* @__PURE__ */ jsx(Board, { cols: 8, children: Array.from({ length: 64 }, (_, i) => {
+      const dark = (Math.floor(i / 8) + i) % 2 === 1;
+      const p = CHESS[i];
+      return /* @__PURE__ */ jsx(
+        "div",
+        {
+          onClick: () => setSel(i),
+          style: { background: sel === i ? "#fef08a" : dark ? "#b88b4a" : "#f0d9b5" },
+          children: p === "." ? "" : GLYPH[p]
+        },
+        i
+      );
+    }) }),
+    /* @__PURE__ */ jsxs(Only, { in: "expanded", children: [
+      /* @__PURE__ */ jsx(Text, { variant: "title", children: "Ходи" }),
+      /* @__PURE__ */ jsx(Fill, { scroll: true, children: /* @__PURE__ */ jsx(List, { items: MOVES.map((m, i) => ({ id: String(i), m })), keyOf: (x) => x.id, separated: true, children: (x, i) => /* @__PURE__ */ jsxs(Text, { variant: "body", children: [
+        i + 1,
+        ". ",
+        x.m
+      ] }) }) }),
+      /* @__PURE__ */ jsx(Button, { onPress: () => {
+      }, variant: "secondary", children: "Здатися" })
+    ] }),
+    /* @__PURE__ */ jsx(Meta, { children: "Останній хід: Bb5-a4" })
+  ] });
+};
+const TicTacToe = () => {
+  const [cells, setCells] = useState(Array(9).fill(""));
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "Хрестики-нулики" }),
+    /* @__PURE__ */ jsx(Board, { cols: 3, children: cells.map((c, i) => /* @__PURE__ */ jsx(
+      "div",
+      {
+        onClick: () => setCells((prev) => prev.map((v, j) => j === i ? v ? "" : "X" : v)),
+        style: { border: "1px solid var(--cpd-color-border-interactive-secondary)" },
+        children: c
+      },
+      i
+    )) }),
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsx(Text, { variant: "body", children: "Хід: Андрій" }),
+      /* @__PURE__ */ jsx(Button, { onPress: () => setCells(Array(9).fill("")), variant: "secondary", children: "Заново" })
+    ] })
+  ] });
+};
+const SEGMENTS = ["Піца", "Кіно", "Бар", "Настілки", "Караоке", "Похід"];
+const COLOURS = ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#06b6d4"];
+const Wheel = () => {
+  const [angle, setAngle] = useState(0);
+  const stops = SEGMENTS.map((_, i) => `${COLOURS[i]} ${i * 100 / SEGMENTS.length}% ${(i + 1) * 100 / SEGMENTS.length}%`);
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "Плани на вечір" }),
+    /* @__PURE__ */ jsxs(Square, { children: [
+      /* @__PURE__ */ jsx(
+        "div",
+        {
+          style: {
+            width: "100%",
+            height: "100%",
+            borderRadius: "50%",
+            background: `conic-gradient(${stops.join(", ")})`,
+            transform: `rotate(${angle}deg)`,
+            transition: "transform 3s cubic-bezier(.17,.67,.12,.99)"
+          }
+        }
+      ),
+      /* @__PURE__ */ jsx("div", { style: { position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", fontSize: "1.2em" }, children: "▼" })
+    ] }),
+    /* @__PURE__ */ jsx(Text, { variant: "body", children: "Крутніть, щоб обрати заняття" }),
+    /* @__PURE__ */ jsx(Button, { onPress: () => setAngle((a) => a + 1080 + Math.floor(Math.random() * 360)), children: "Крутити колесо" })
+  ] });
+};
+const OPTIONS = ["Карпати", "Львів", "Одеса", "Буковель"];
+const Poll = () => {
+  const [pick, setPick] = useState(null);
+  const shares = [0.4, 0.3, 0.2, 0.1];
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "Куди їдемо на вихідні?" }),
+    /* @__PURE__ */ jsx(Fill, { children: /* @__PURE__ */ jsx(Stack, { children: OPTIONS.map((o, i) => /* @__PURE__ */ jsx(Choice, { label: o, onPress: () => setPick(o), picked: pick === o, ...pick ? { share: shares[i], detail: `${Math.round(shares[i] * 10)} голосів` } : {} }, o)) }) }),
+    /* @__PURE__ */ jsx(Meta, { children: "10 голосів · голос можна змінити" })
+  ] });
+};
+const QUESTIONS = Array.from({ length: 10 }, (_, i) => ({ q: `Питання ${i + 1}: столиця країни №${i + 1}?`, a: ["Київ", "Варшава", "Прага", "Відень"] }));
+const Quiz = () => {
+  const [n, setN] = useState(0);
+  const q = QUESTIONS[n];
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsxs(Text, { variant: "caption", children: [
+        "Питання ",
+        n + 1,
+        " з 10"
+      ] }),
+      /* @__PURE__ */ jsx(Text, { variant: "caption", children: "Рахунок: 3" })
+    ] }),
+    /* @__PURE__ */ jsx(Progress, { value: (n + 1) / 10 }),
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: q.q }),
+    /* @__PURE__ */ jsx(Grid, { cols: 2, children: q.a.map((a) => /* @__PURE__ */ jsx(Button, { onPress: () => setN((x) => (x + 1) % 10), variant: "secondary", children: a }, a)) }),
+    /* @__PURE__ */ jsx(Only, { in: "expanded", children: /* @__PURE__ */ jsx(Fill, { scroll: true, children: /* @__PURE__ */ jsx(List, { items: QUESTIONS.map((x, i) => ({ id: String(i), ...x })), keyOf: (x) => x.id, separated: true, children: (x, i) => /* @__PURE__ */ jsxs(Text, { variant: "body", children: [
+      i < n ? "✓" : "·",
+      " ",
+      x.q
+    ] }) }) }) })
+  ] });
+};
+const PEOPLE = ["Андрій", "Emmm", "Оля", "Ігор", "Марта", "Сашко", "Ніна", "Юра", "Іра", "Тарас", "Леся", "Богдан"].map((name, i) => ({ id: String(i), name, steps: 12e3 - i * 700 }));
+const Leaderboard = () => /* @__PURE__ */ jsxs(Stack, { children: [
+  /* @__PURE__ */ jsx(Text, { variant: "title", children: "🏃 Челендж кроків" }),
+  /* @__PURE__ */ jsx(Fill, { scroll: true, children: /* @__PURE__ */ jsx(List, { items: PEOPLE, keyOf: (p) => p.id, separated: true, max: 3, children: (p, i) => /* @__PURE__ */ jsxs(Row, { between: true, children: [
+    /* @__PURE__ */ jsxs(Row, { children: [
+      /* @__PURE__ */ jsxs(Text, { variant: "body", children: [
+        i + 1,
+        "."
+      ] }),
+      /* @__PURE__ */ jsx(Avatar, { name: p.name, size: 24 }),
+      /* @__PURE__ */ jsx(Text, { variant: "body", children: p.name })
+    ] }),
+    /* @__PURE__ */ jsx(Text, { variant: "body", children: p.steps })
+  ] }) }) }),
+  /* @__PURE__ */ jsx(Only, { in: "row", children: /* @__PURE__ */ jsx(Meta, { children: "Моє місце: 5 · відкрити таблицю" }) }),
+  /* @__PURE__ */ jsx(Only, { in: "expanded", children: /* @__PURE__ */ jsx(Button, { onPress: () => {
+  }, children: "Оновити мої кроки" }) })
+] });
+const Greeting = () => /* @__PURE__ */ jsxs(Card, { tone: "sunset", center: true, fill: true, children: [
+  /* @__PURE__ */ jsx(Text, { variant: "caption", children: "З днем народження" }),
+  /* @__PURE__ */ jsx(Hero, { children: "Оля 🎂" }),
+  /* @__PURE__ */ jsx(Text, { variant: "body", children: "Нехай цей рік буде найкращим. Від усієї команди 🎉" }),
+  /* @__PURE__ */ jsx(Button, { onPress: () => {
+  }, variant: "secondary", children: "Привітати ✨" }),
+  /* @__PURE__ */ jsx(Meta, { children: "12 привітань" })
+] });
+const Valentine = () => /* @__PURE__ */ jsx(Stack, { children: /* @__PURE__ */ jsxs(Card, { tone: "berry", center: true, fill: true, motion: "pop", children: [
+  /* @__PURE__ */ jsx("div", { className: "s-float", style: { fontSize: "3em", lineHeight: 1 }, children: "💌" }),
+  /* @__PURE__ */ jsx(Hero, { children: "Для Марти" }),
+  /* @__PURE__ */ jsx(Text, { variant: "body", children: "Ти — найкраще, що сталося цього року" }),
+  /* @__PURE__ */ jsxs(Row, { children: [
+    /* @__PURE__ */ jsx(Button, { onPress: () => {
+    }, variant: "secondary", children: "❤️ 24" }),
+    /* @__PURE__ */ jsx(Button, { onPress: () => {
+    }, children: "Відповісти" })
+  ] })
+] }) });
+const QuietCard = () => /* @__PURE__ */ jsxs(Stack, { children: [
+  /* @__PURE__ */ jsxs(Card, { tone: "mint", fill: true, children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "Дякую, команда 🙏" }),
+    /* @__PURE__ */ jsx(Text, { variant: "body", children: "Реліз вийшов вчасно. Кожен доклав руку, і це видно." }),
+    /* @__PURE__ */ jsx(Meta, { children: "Андрій · сьогодні" })
+  ] }),
+  /* @__PURE__ */ jsx(Button, { onPress: () => {
+  }, children: "Приєднатися до подяки" })
+] });
+const BadCard = () => /* @__PURE__ */ jsxs(Stack, { children: [
+  /* @__PURE__ */ jsxs("div", { style: { border: "2px solid #888", borderRadius: 12, padding: 12, background: "#fff", color: "#f3f3f3" }, children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "Біле на білому" }),
+    /* @__PURE__ */ jsx(Text, { variant: "body", children: "Цей текст майже не видно." })
+  ] }),
+  /* @__PURE__ */ jsx(Text, { variant: "body", children: "Текст без фону — на сірому рядку" }),
+  /* @__PURE__ */ jsx(Button, { onPress: () => {
+  }, children: "Кнопка" })
+] });
+const CounterPost = () => {
+  const [n, setN] = useState(41);
+  return /* @__PURE__ */ jsxs(Stack, { center: true, children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "Разом випито кави ☕" }),
+    /* @__PURE__ */ jsx(Fill, { children: /* @__PURE__ */ jsx(Hero, { children: n }) }),
+    /* @__PURE__ */ jsxs(Row, { children: [
+      /* @__PURE__ */ jsx(Button, { onPress: () => setN((x) => x - 1), variant: "secondary", children: "−1" }),
+      /* @__PURE__ */ jsx(Button, { onPress: () => setN((x) => x + 1), children: "+1" })
+    ] }),
+    /* @__PURE__ */ jsx(Meta, { children: "Останній: Андрій" })
+  ] });
+};
+const FormPost = () => {
+  const [name, setName] = useState("");
+  const [guests, setGuests] = useState(1);
+  const [coming, setComing] = useState(false);
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "RSVP на пікнік" }),
+    /* @__PURE__ */ jsx(Input, { value: name, onChange: setName, placeholder: "Ваше імʼя", label: "Імʼя" }),
+    /* @__PURE__ */ jsx(Counter, { value: guests, onChange: setGuests, min: 0, max: 5, label: "+1" }),
+    /* @__PURE__ */ jsx(Check, { label: "Я буду", done: coming, onToggle: () => setComing((c) => !c) }),
+    /* @__PURE__ */ jsx(Button, { onPress: () => {
+    }, children: "Надіслати" })
+  ] });
+};
+const TILES = ["🍕", "🎬", "🍺", "🎲", "🎤", "🥾", "🎨", "🏀"];
+const Tiles = () => {
+  const [picked, setPicked] = useState(null);
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsx(Text, { variant: "title", children: "Що робимо?" }),
+    /* @__PURE__ */ jsx(Fill, { children: /* @__PURE__ */ jsx(Grid, { cols: 4, expandedCols: 4, children: TILES.map((t) => /* @__PURE__ */ jsx(Square, { style: { width: "100%", background: picked === t ? "var(--cpd-color-bg-action-primary-rest)" : "var(--cpd-color-bg-subtle-secondary)", borderRadius: 10 }, children: /* @__PURE__ */ jsx("div", { onClick: () => setPicked(t), style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2em" }, children: t }) }, t)) }) }),
+    /* @__PURE__ */ jsx(Meta, { children: picked ? `Обрано: ${picked}` : "Оберіть плитку" })
+  ] });
+};
+const Memory = () => {
+  const [open, setOpen] = useState([]);
+  const faces = ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼"];
+  const cards = [...faces, ...faces];
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsx(Text, { variant: "title", children: "Memory" }),
+      /* @__PURE__ */ jsx(Text, { variant: "caption", children: "Пари: 0 з 8" })
+    ] }),
+    /* @__PURE__ */ jsx(Board, { cols: 4, children: cards.map((f, i) => /* @__PURE__ */ jsx(
+      "div",
+      {
+        onClick: () => setOpen((o) => o.includes(i) ? o : [...o, i]),
+        style: { margin: "3%", borderRadius: 8, background: open.includes(i) ? "white" : "var(--cpd-color-bg-action-primary-rest)" },
+        children: open.includes(i) ? f : ""
+      },
+      i
+    )) })
+  ] });
+};
+const CELL = 12;
+const Snake = () => {
+  const canvas = useRef(null);
+  const sound = useSound();
+  const haptic = useHaptic();
+  const expand = useExpand();
+  const game = useRef({
+    body: [{ x: 6, y: 6 }],
+    dir: { x: 1, y: 0 },
+    food: { x: 12, y: 8 },
+    since: 0,
+    cols: 20,
+    rows: 20,
+    dead: false
+  });
+  const [score, setScore] = useState(0);
+  const [fps, setFps] = useState(0);
+  const turn = useCallback((x, y) => {
+    const g = game.current;
+    if (g.dir.x === -x && g.dir.y === -y) return;
+    g.dir = { x, y };
+  }, []);
+  useFrame(({ dt, fps: measured }) => {
+    const ctx = canvas.current ? fitCanvas(canvas.current) : null;
+    if (!ctx || !canvas.current) return;
+    const g = game.current;
+    const box = canvas.current.getBoundingClientRect();
+    g.cols = Math.max(8, Math.floor(box.width / CELL));
+    g.rows = Math.max(8, Math.floor(box.height / CELL));
+    g.since += dt;
+    if (!g.dead && g.since > 110) {
+      g.since = 0;
+      const head = g.body[0];
+      const next = { x: head.x + g.dir.x, y: head.y + g.dir.y };
+      if (next.x < 0 || next.y < 0 || next.x >= g.cols || next.y >= g.rows || g.body.some((c) => c.x === next.x && c.y === next.y)) {
+        g.dead = true;
+        sound("lose");
+        haptic("warning");
+      } else {
+        g.body.unshift(next);
+        if (next.x === g.food.x && next.y === g.food.y) {
+          sound("pick");
+          haptic("light");
+          setScore((s) => s + 1);
+          g.food = { x: Math.floor(Math.random() * g.cols), y: Math.floor(Math.random() * g.rows) };
+        } else {
+          g.body.pop();
+        }
+      }
+    }
+    ctx.clearRect(0, 0, box.width, box.height);
+    ctx.fillStyle = "rgba(0,0,0,0.06)";
+    ctx.fillRect(0, 0, box.width, box.height);
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(g.food.x * CELL + 1, g.food.y * CELL + 1, CELL - 2, CELL - 2);
+    g.body.forEach((c, i) => {
+      ctx.fillStyle = i === 0 ? "#16a34a" : "#22c55e";
+      ctx.fillRect(c.x * CELL + 1, c.y * CELL + 1, CELL - 2, CELL - 2);
+    });
+    if (measured !== fps) setFps(measured);
+  });
+  const restart = () => {
+    game.current = { body: [{ x: 6, y: 6 }], dir: { x: 1, y: 0 }, food: { x: 12, y: 8 }, since: 0, cols: 20, rows: 20, dead: false };
+    setScore(0);
+    sound("tap");
+  };
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsxs(Text, { variant: "title", children: [
+        "🐍 ",
+        score
+      ] }),
+      /* @__PURE__ */ jsxs(Text, { variant: "caption", children: [
+        fps,
+        " fps"
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx(Fill, { children: /* @__PURE__ */ jsx("canvas", { ref: canvas, style: { width: "100%", height: "100%", borderRadius: 10, display: "block" } }) }),
+    /* @__PURE__ */ jsxs(Grid, { cols: 4, children: [
+      /* @__PURE__ */ jsx(Button, { onPress: () => {
+        turn(-1, 0);
+        haptic();
+      }, variant: "secondary", children: "←" }),
+      /* @__PURE__ */ jsx(Button, { onPress: () => {
+        turn(0, 1);
+        haptic();
+      }, variant: "secondary", children: "↓" }),
+      /* @__PURE__ */ jsx(Button, { onPress: () => {
+        turn(0, -1);
+        haptic();
+      }, variant: "secondary", children: "↑" }),
+      /* @__PURE__ */ jsx(Button, { onPress: () => {
+        turn(1, 0);
+        haptic();
+      }, variant: "secondary", children: "→" })
+    ] }),
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsx(Button, { onPress: restart, children: "Заново" }),
+      /* @__PURE__ */ jsx(Button, { onPress: () => void expand(), variant: "secondary", children: "На весь екран" })
+    ] })
+  ] });
+};
+const INK = ["#1c1917", "#ef4444", "#2563eb", "#16a34a", "#f59e0b"];
+const Paint = () => {
+  const canvas = useRef(null);
+  const strokes = useRef([]);
+  const current = useRef([]);
+  const [colour, setColour] = useState(INK[0]);
+  const [count, setCount] = useState(0);
+  const sound = useSound();
+  const haptic = useHaptic();
+  const redraw = useCallback(() => {
+    const el = canvas.current;
+    const ctx = el ? fitCanvas(el) : null;
+    if (!ctx || !el) return;
+    const box = el.getBoundingClientRect();
+    ctx.clearRect(0, 0, box.width, box.height);
+    const paint = (points, stroke) => {
+      if (points.length === 0) return;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (const [x, y] of points.slice(1)) ctx.lineTo(x, y);
+      ctx.stroke();
+    };
+    for (const stroke of strokes.current) paint(stroke.points, stroke.colour);
+    paint(current.current, colour);
+  }, [colour]);
+  useEffect(redraw, [redraw]);
+  const at = (e) => {
+    const box = canvas.current.getBoundingClientRect();
+    return [e.clientX - box.left, e.clientY - box.top];
+  };
+  const onDown = (e) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    current.current = [at(e)];
+    haptic();
+    redraw();
+  };
+  const onMove = (e) => {
+    if (current.current.length === 0) return;
+    current.current = [...current.current, at(e)];
+    redraw();
+  };
+  const onUp = () => {
+    if (current.current.length === 0) return;
+    strokes.current = [...strokes.current, { points: current.current, colour }];
+    current.current = [];
+    setCount(strokes.current.length);
+    sound("tap", 0.4);
+    redraw();
+  };
+  return /* @__PURE__ */ jsxs(Stack, { children: [
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsx(Text, { variant: "title", children: "Малюнок" }),
+      /* @__PURE__ */ jsxs(Text, { variant: "caption", children: [
+        count,
+        " штрихів"
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx(Fill, { children: /* @__PURE__ */ jsx("div", { onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerCancel: onUp, style: { width: "100%", height: "100%", touchAction: "none" }, children: /* @__PURE__ */ jsx("canvas", { ref: canvas, style: { width: "100%", height: "100%", background: "#fff", borderRadius: 10, display: "block" } }) }) }),
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      INK.map((c) => /* @__PURE__ */ jsx(
+        "div",
+        {
+          onClick: () => {
+            setColour(c);
+            haptic();
+          },
+          style: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            background: c,
+            outline: c === colour ? "3px solid var(--cpd-color-text-primary)" : "none",
+            outlineOffset: 2
+          }
+        },
+        c
+      )),
+      /* @__PURE__ */ jsx(Button, { onPress: () => {
+        strokes.current = [];
+        setCount(0);
+        redraw();
+        sound("pop");
+      }, variant: "secondary", children: "Стерти" })
+    ] })
+  ] });
+};
+const PAGES = [
+  // Grouped by aspect: mount the lab at 1:1 and page through the first
+  // three, then at 3:4 for the next two, then 4:3 for the rest.
+  { id: "snake", aspect: "1:1", view: Snake },
+  { id: "paint", aspect: "1:1", view: Paint },
+  { id: "chess", aspect: "1:1", view: Chess },
+  { id: "tictactoe", aspect: "1:1", view: TicTacToe },
+  { id: "memory", aspect: "1:1", view: Memory },
+  { id: "wheel", aspect: "3:4", view: Wheel },
+  { id: "form", aspect: "3:4", view: FormPost },
+  { id: "poll", aspect: "4:3", view: Poll },
+  { id: "quiz", aspect: "4:3", view: Quiz },
+  { id: "leaderboard", aspect: "4:3", view: Leaderboard },
+  { id: "greeting", aspect: "4:3", view: Greeting },
+  { id: "valentine", aspect: "4:3", view: Valentine },
+  { id: "quiet", aspect: "4:3", view: QuietCard },
+  { id: "bad", aspect: "4:3", view: BadCard },
+  { id: "counter", aspect: "4:3", view: CounterPost },
+  { id: "tiles", aspect: "4:3", view: Tiles }
+];
+function App() {
+  const [index, setIndex] = useState(0);
+  const viewport = useViewport();
+  const page = PAGES[index];
+  const View = page.view;
+  useEffect(() => {
+    console.log(`lab page ${page.id} (aspect ${page.aspect}) in ${viewport.mode} ${viewport.width}×${viewport.height}`);
+    window.dispatchEvent(new Event("spiral-measure"));
+  }, [index, viewport.mode]);
+  return /* @__PURE__ */ jsxs("div", { className: "s-root", style: { padding: 10 }, "data-lab-page": page.id, children: [
+    /* @__PURE__ */ jsx(View, {}),
+    /* @__PURE__ */ jsxs("div", { style: { position: "absolute", left: 0, right: 0, bottom: 0, display: "flex", gap: 2, opacity: 0.35 }, children: [
+      /* @__PURE__ */ jsx("div", { onClick: () => setIndex((i) => (i + PAGES.length - 1) % PAGES.length), style: { flex: 1, height: 6, background: "#000" } }),
+      /* @__PURE__ */ jsx("div", { onClick: () => setIndex((i) => (i + 1) % PAGES.length), style: { flex: 1, height: 6, background: "#000" } })
+    ] })
+  ] });
+}
+export {
+  App as default
+};

@@ -1,0 +1,24 @@
+spiral-app-shell
+Copyright 2026 the Spiral authors.
+
+"The Spiral authors" is Andrii Panasiuk, the individual developer who
+publishes Spiral and holds the copyright in Spiral's code. Spiral is the
+product's name, not a company.
+
+This repository is Spiral's own code, not a fork. It is licensed under the
+GNU Affero General Public License v3.0 or, at your option, any later version
+(LICENSE).
+
+Additional permission under section 7 of the AGPL
+-------------------------------------------------
+
+As the holders of the copyright in Spiral's code, the Spiral authors give
+you permission to convey a work that contains Spiral's code through Apple's
+App Store, or a similar app store whose terms restrict what recipients may
+do with the copy they receive (for example a device limit or a ban on
+redistribution), provided that you meet every other condition of the
+license, and in particular that the Corresponding Source of the version you
+convey is available to everyone who receives it, under the same license.
+This permission covers Spiral's code only. It gives no permission for
+Element's code or anyone else's; their own licenses apply to it. You may
+remove this permission from your copies, as section 7 allows.

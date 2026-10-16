@@ -1,0 +1,1333 @@
+/*
+Copyright 2026 the Spiral authors. AGPL-3.0-or-later.
+
+Brief 0066 / ADR-0007. The look an Interactive Post has by default.
+
+Every colour, radius and font here is a Compound semantic token. Nothing is
+transcribed: a hard-coded hex would be a copy that drifts the first time
+Element changes a shade, and the whole reason the kit exists is that a
+generated app should look like the client rather than like whatever the model
+felt like that day.
+
+Targets are 44 px minimum. A post is a timeline row, so a control that misses
+is a control the user thinks is broken rather than one they try again.
+
+Motion is behind `prefers-reduced-motion`. The frame answers that from the OS
+like any other document, so respecting it costs nothing and ignoring it would
+make a chat row animate at someone who asked the whole phone not to.
+*/
+
+/* THE SYSTEM FONT, not Inter (§ 5.69). Compound's web tokens name Inter
+   first; Compound iOS maps every style to the system font (`Font.body`,
+   `Font.caption` — San Francisco), so the row AROUND a post is not Inter
+   either. A post in Inter would match the web and mismatch the phone. So
+   the kit asks for the system face first and lets the token chain follow
+   for a browser (the ruler, the mock page), where `-apple-system` is
+   Helvetica-alike and the numbers are the same. Closes OPEN #17 without a
+   font file. */
+/* No background here on purpose. The post's surface is drawn NATIVELY by the
+   row, the way a text bubble's is, and this document stays transparent on top
+   of it.
+
+   Two reasons, and the second is the one that decided it. A surface painted in
+   here cannot exist until the stylesheet has loaded, so every post opened with
+   a flash of white first. And an app that wants its own colour would have to
+   paint over ours rather than simply onto the row — which makes the kit's
+   default an obstacle instead of a starting point. */
+.s-root {
+  /* The root IS the box: a definite `height`, so that `.s-stack`'s 100 %
+     and `<Fill>`'s "what is left" mean something. It was `min-height` for a
+     day (2026-09-17): a fixed height plus `justify-content: center` had
+     overflowed a tall poll on BOTH sides. But with a minimum, a percentage
+     height below it resolves to `auto`, a Stack is content-sized, and a
+     `<Fill scroll>` — flex-basis 0, min-height 0, overflow hidden — is
+     0 px tall: the full view of the first dual-view checklist was a title
+     and a progress bar over nothing (2026-09-17, on the device). The
+     centring is now `safe`, which is the actual fix for the first bug:
+     content taller than the box starts at the top and grows downward,
+     where the frame clips it and a reader expects the missing part. */
+  width: 100%;
+  height: 100%;
+  /* The root is a QUERY CONTAINER (iOS 16+). Everything in the kit that
+     must fit is sized in `cq*` units — percentages of THIS box, not of the
+     phone — so the same app fits a 225-px row and a 400-px viewer without
+     the model computing a single pixel. */
+  container-type: size;
+  container-name: spiral;
+  color: var(--cpd-color-text-primary);
+  font-family: -apple-system, system-ui, var(--cpd-font-family-sans, sans-serif);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+
+  /* An app is a control surface, not a document.
+
+     Selection and the callout menu are what WebKit reaches for on a long press
+     over text, and in a chat row that is only ever in the way: nothing in a
+     post is prose to be selected, and a magnifier over a button reads as a web
+     page embedded in a conversation rather than part of one.
+
+     An app that genuinely wants selectable text can say `user-select: text` on
+     the element that holds it. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* `.s-root` is in this list, not just its descendants. Left out, its own
+   padding was added to `min-height: 100%` instead of fitting inside it, so the
+   surface overflowed the frame by exactly its padding and a counter that fits
+   twice over got a scrollbar. */
+.s-root,
+.s-root *,
+.s-root *::before,
+.s-root *::after {
+  box-sizing: border-box;
+}
+
+/* Text */
+
+.s-text {
+  margin: 0;
+  color: var(--cpd-color-text-primary);
+}
+
+.s-text--title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.s-text--body {
+  font-size: 15px;
+}
+
+.s-text--caption {
+  font-size: 13px;
+  color: var(--cpd-color-text-secondary);
+}
+
+/* Button */
+
+/* A control is smaller in a row than in the viewer, because the row is
+   242 points tall and the viewer is 758. The size steps with the box, the
+   way text already does — `cqmin` is the shorter side of the post's own
+   query container, so a 322 × 242 row lands on the floor of each clamp and
+   the full screen on the ceiling.
+
+   The FLOOR IS THE FLOOR: 40 px, which is what the ruler demands and what
+   a finger needs. What shrinks is the padding and the type, which is where
+   a row's space actually goes — three secondary buttons across a 322 px row
+   were 40 px wider than the box before this. Nothing here trades away the
+   size of the thing you have to hit. */
+.s-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: clamp(40px, 13cqmin, 44px);
+  /* Never narrower than it is tall. With the padding stepped down for a
+     row, a two-character label — "−1", "+1" — came out 38.8 px wide: still
+     tall enough to hit and too narrow to aim at. */
+  min-width: clamp(40px, 13cqmin, 44px);
+  padding: 0 clamp(11px, 5cqmin, 18px);
+  border: 0;
+  border-radius: 22px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  /* Double-tap-to-zoom costs every tap ~300 ms of hesitation, which reads as
+     a slow app rather than a browser default. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.s-input {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.s-input__label {
+  font-size: 13px;
+  color: var(--cpd-color-text-secondary);
+}
+
+.s-input__field {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--cpd-color-border-interactive-secondary);
+  border-radius: 12px;
+  background: var(--cpd-color-bg-canvas-default);
+  color: var(--cpd-color-text-primary);
+  font: inherit;
+  /* Sixteen, not the kit's fifteen: below 16px WebKit zooms the page in
+     when a field takes focus, and a post is a fixed row that cannot zoom —
+     the app slid and doubled over its own picture. The viewport forbids
+     the zoom too; this is the belt to that brace. */
+  font-size: 16px;
+  /* The one place in a post where text is meant to be touched. */
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+.s-input__field:focus {
+  outline: none;
+  border-color: var(--cpd-color-border-focused);
+}
+
+.s-button--primary {
+  background: var(--cpd-color-bg-action-primary-rest);
+  color: var(--cpd-color-text-on-solid-primary);
+}
+
+.s-button--primary:active:not(:disabled) {
+  background: var(--cpd-color-bg-action-primary-pressed);
+}
+
+.s-button--secondary {
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+}
+
+.s-button--secondary:active:not(:disabled) {
+  background: var(--cpd-color-bg-subtle-primary);
+}
+
+.s-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.s-button:focus-visible,
+.s-choice:focus-visible,
+.s-check:focus-visible,
+.s-counter button:focus-visible {
+  outline: 2px solid var(--cpd-color-border-focused);
+  outline-offset: 2px;
+}
+
+/* Choice — one option among several, with its share of the vote */
+
+/* A list row steps with the box like a button does, and keeps the same
+   40 px floor: it is the thing a finger lands on. */
+.s-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(7px, 3cqmin, 10px);
+  width: 100%;
+  min-height: clamp(40px, 13cqmin, 44px);
+  padding: clamp(7px, 3cqmin, 10px) clamp(10px, 4cqmin, 14px);
+  border: 1px solid var(--cpd-color-border-interactive-secondary);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.s-choice--picked {
+  border-color: var(--cpd-color-border-interactive-primary);
+}
+
+/* Behind the label, so a long option stays readable over its own bar. */
+.s-choice__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--cpd-color-bg-subtle-secondary);
+  pointer-events: none;
+  transition: width 240ms ease-out;
+}
+
+.s-choice__label,
+.s-choice__share {
+  position: relative;
+}
+
+.s-choice__label {
+  flex: 1;
+}
+
+.s-choice__share {
+  color: var(--cpd-color-text-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Check — a box that is either done or not */
+
+.s-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.s-check__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--cpd-color-border-interactive-primary);
+  border-radius: 6px;
+  color: var(--cpd-color-text-on-solid-primary);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.s-check--done .s-check__box {
+  border-color: var(--cpd-color-bg-action-primary-rest);
+  background: var(--cpd-color-bg-action-primary-rest);
+}
+
+.s-check--done .s-check__label {
+  color: var(--cpd-color-text-secondary);
+  text-decoration: line-through;
+}
+
+/* Counter — a number with two targets */
+
+.s-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.s-counter button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+  font: inherit;
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.s-counter button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.s-counter__value {
+  min-width: 2ch;
+  text-align: center;
+  font-weight: 600;
+  /* Digits must not shift the buttons as the number grows. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row, List */
+
+.s-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.s-row--between {
+  justify-content: space-between;
+}
+/* A Row directly inside a Row is an item in the line, not the line (§ 5.58).
+   `width: 100%` above is what makes a Row span its Stack; applied to a Row
+   inside a Row it claimed the whole line from its siblings — a caption the
+   owner asked to centre was squeezed to nothing beside an empty avatar group
+   and fell into a column at the left. The same mistake the nested Stack made
+   with height. A nested Row is its content's width — so `between` on the
+   outer row sends the groups to the edges — and one that is itself
+   `between` takes the rest of the line, which is why it was written.
+   Never narrower than its content (the flex default, kept on purpose): a
+   first cut with `min-width: 0` let a scoreboard's −/+ group shrink under
+   its own buttons and push «+» past the edge. */
+.s-row > .s-row {
+  width: auto;
+}
+.s-row > .s-row--between {
+  flex: 1 1 auto;
+}
+
+.s-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.s-list--separated > li + li {
+  border-top: 1px solid var(--cpd-color-border-disabled);
+}
+
+.s-list__more {
+  padding: 4px 0;
+}
+
+/* Progress */
+
+.s-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--cpd-color-bg-subtle-secondary);
+  overflow: hidden;
+}
+
+.s-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cpd-color-bg-action-primary-rest);
+  transition: width 240ms ease-out;
+}
+
+/* Avatar */
+
+.s-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-secondary);
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  overflow: hidden;
+  user-select: none;
+}
+
+.s-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Meta — the quiet line under everything */
+
+.s-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cpd-color-text-secondary);
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-choice__fill,
+  .s-progress__fill {
+    transition: none;
+  }
+}
+
+/* Layout (step 6.10). The row is small and fixed; the viewer is big. A post
+   is written once and fits both because these classes measure the container,
+   not the phone. Generated code composes these rather than inventing sizes. */
+
+/* A column that fills the box: children stack, `gap` between, the one with
+   `.s-fill` takes what is left. The default root layout. */
+.s-stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 2.5cqh, 12px);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+/* A Stack INSIDE another layout is a group, not the frame.
+   `height: 100%` above is what makes the root Stack the box, and it applied
+   to every Stack — so a nested one demanded the whole height too and took it
+   from the `<Fill>` above, which is allowed to give way to nothing
+   (`flex: 1 1 0; min-height: 0`). A signature pad did exactly that: in the
+   row the canvas was fine, and opened full screen — where an
+   `<Only in="expanded">` added a Stack listing who had signed — the canvas
+   measured 347.8 × 0 px and the app looked like a blank card (lab,
+   2026-09-20). Nothing said so until the ruler learned to see a collapsed
+   canvas; the five corpus apps with one Stack each were never affected. */
+.s-stack .s-stack {
+  height: auto;
+}
+/* …EXCEPT where the parent has a definite height and exists to be filled.
+   The rule above was written for a Stack used as a GROUP — the one inside
+   `<Only in="expanded">` that was taking the height a `<Fill>` had been
+   given. Applied to every nested Stack it also caught the Stack that IS the
+   contents of a filling card, and a countdown had 48 px of fill on a 758 px
+   screen with its own digits clipped. A Stack directly inside a card or a
+   fill is the thing that fills it. */
+.s-card > .s-stack,
+.s-fill > .s-stack {
+  height: 100%;
+}
+.s-stack--center {
+  justify-content: safe center;
+  align-items: safe center;
+  /* Centred means its lines too: a two-line greeting centred as a box
+     but ragged-left inside it is not what «centre» asked for. */
+  text-align: center;
+}
+/* Alignment a post asks for with `align` — or with `textAlign` on a Meta,
+   whose flex row has to follow it (§ 5.57). */
+.s-align--start {
+  text-align: start;
+}
+.s-align--center {
+  text-align: center;
+}
+.s-align--end {
+  text-align: end;
+}
+.s-meta.s-align--center {
+  justify-content: center;
+}
+.s-meta.s-align--end {
+  justify-content: flex-end;
+}
+/* In a row, a text that asks to be centred or pushed to the end takes the
+   row's free width — a shrink-wrapped line is exactly as wide as its words,
+   so its alignment had nothing to act on and «centre it» moved nothing
+   beside a button (§ 5.57). Only when asked: every other text in a row
+   keeps its size. */
+.s-row > .s-text.s-align--center,
+.s-row > .s-text.s-align--end,
+.s-row > .s-meta.s-align--center,
+.s-row > .s-meta.s-align--end {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Opened full screen, a post whose content does not fill the height sits
+   in the middle, the way a photo does in a viewer — not hugging the top
+   with half a screen of nothing under it (the wheel, lab 2026-09-18). A
+   Stack with a `Fill` has said what takes the rest and is left alone. */
+html[data-spiral-viewport="expanded"] .s-root > .s-stack:not(:has(> .s-fill)) {
+  justify-content: safe center;
+}
+/* A FILL MAY NOT VANISH.
+
+   `min-height: 0` let it absorb every shortfall in the layout, which is
+   right until the shortfall is the whole thing: a birthday card put its
+   confetti canvas AND its greeting inside a `<Fill>`, the siblings took all
+   the height, and the post rendered as an empty coloured card. Nothing was
+   wrong with the card — the text simply had nowhere to be, silently.
+
+   48 px is the floor because below it nothing meaningful is drawn anyway.
+   What it buys is not space, it is a SYMPTOM: a post that does not fit now
+   overflows visibly, and `overflow` is what the ruler reports, which is a
+   true description of the problem instead of an invisible one. */
+.s-fill {
+  flex: 1 1 0;
+  min-height: 48px;
+  min-width: 0;
+}
+.s-stack > .s-fill {
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+}
+/* A scrolling area starts at its top, or the top is unreachable. */
+.s-stack > .s-fill.s-scroll {
+  justify-content: flex-start;
+}
+
+/* Equal columns that wrap. `--cols` from the component; every cell keeps a
+   tappable size. */
+.s-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  gap: clamp(4px, 2cqmin, 10px);
+  width: 100%;
+}
+html[data-spiral-viewport="expanded"] .s-grid {
+  grid-template-columns: repeat(var(--cols-expanded, var(--cols, 2)), minmax(0, 1fr));
+}
+
+/* A board: equal cells on both axes, and it takes WHAT IS LEFT of the
+   Stack — a title above and a row of controls below always fit, because the
+   board is sized from the remaining height (flex) and its width follows
+   (aspect-ratio), capped at the box's width for a tall box. A fixed share of
+   the box (`78cqh`, the first draft) overflowed the moment a control row was
+   added under a tic-tac-toe grid (lab, 2026-09-18). The board is its own
+   query container so a cell's glyph is sized from the cell. */
+.s-board {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 8), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows, var(--cols, 8)), minmax(0, 1fr));
+  aspect-ratio: var(--cols, 8) / var(--rows, var(--cols, 8));
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  width: auto;
+  max-width: 100%;
+  /* In a TALL box (the viewer) the remaining height is more than the
+     width; the width caps at 100 % but the flex height does not follow
+     the aspect back down, and the cells came out 127×213 (lab, WebKit,
+     2026-09-18). The height is capped at what the box's width allows. */
+  max-height: calc(100cqw * var(--rows, var(--cols, 8)) / var(--cols, 8));
+  align-self: center;
+  container-type: inline-size;
+  border-radius: 6px;
+  overflow: hidden;
+}
+/* Outside a Stack there is nothing to take the rest of; a share of the
+   box's height keeps it inside. */
+:not(.s-stack) > .s-board {
+  flex: none;
+  width: min(100%, 78cqh);
+  height: auto;
+}
+.s-board > * {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  font-size: calc(100cqw / var(--cols, 8) * 0.62);
+  line-height: 1;
+  user-select: none;
+}
+
+/* The row draws its expand button over the top-right 32 px of the post.
+   The first line of a post — a title, a row of captions — keeps clear of it;
+   nothing else does, and the viewer has no such button. Before this, the
+   right-hand caption of every two-sided header ("⚫ Emmm", "0 з 12 зібр…")
+   sat under the button (lab, 2026-09-18). */
+/* `<Only>` is a pass-through, not a first child. It renders a plain wrapper,
+   so a post that puts its whole row layout inside `<Only in="row">` — which
+   is the natural way to write a dual-view post — had `.s-only` as the first
+   child, and `.s-only` was on the exclusion list. The reserve then applied
+   to nothing at all, and every such post put its first line back under the
+   button. `dual-quiz-10` did exactly this with "Бали: 0". So the reserve
+   now steps THROUGH the wrapper and lands on what it wraps, where the same
+   exclusions apply. */
+html:not([data-spiral-viewport="expanded"]) .s-root > .s-stack > :first-child:not(.s-board, .s-square, .s-grid, .s-hero, .s-list, .s-fill, .s-only),
+html:not([data-spiral-viewport="expanded"]) .s-root > :first-child:not(.s-stack, .s-board, .s-square, .s-grid, .s-hero, .s-list, .s-fill, .s-only),
+html:not([data-spiral-viewport="expanded"]) .s-root > .s-only > :first-child:not(.s-stack, .s-board, .s-square, .s-grid, .s-hero, .s-list, .s-fill),
+html:not([data-spiral-viewport="expanded"]) .s-root > .s-only > .s-stack > :first-child:not(.s-board, .s-square, .s-grid, .s-hero, .s-list, .s-fill),
+html:not([data-spiral-viewport="expanded"]) .s-root > .s-stack > .s-only > :first-child:not(.s-board, .s-square, .s-grid, .s-hero, .s-list, .s-fill) {
+  padding-right: 34px;
+}
+
+/* ------------------------------------------------------------------ design
+
+   A post sits on the row's own surface — a quiet grey in light mode, a
+   dark grey in dark mode — with no frame of its own: a border around the
+   post would draw a box inside the bubble and the post would stop reading
+   as part of the conversation (operator, 2026-09-18). What a post MAY do
+   is put its own surface — a Card — inside that box, in one of the TONES
+   below. Every tone names its own foreground, so text on a tone can never
+   be white on white or grey on grey: the colour of a tone's text is
+   decided here, once, not by the model per element.
+
+   Two kinds of tone. VIVID tones are the same in both themes — a sunset
+   is a sunset at night — and their text is white. QUIET tones follow the
+   theme: `paper` is white in light mode and a raised grey in dark mode,
+   and their text is the theme's text colour. */
+
+.s-card {
+  --s-fg: var(--cpd-color-text-primary);
+  --s-fg-muted: var(--cpd-color-text-secondary);
+  --s-surface: var(--cpd-color-bg-canvas-default);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 2.5cqh, 12px);
+  padding: clamp(10px, 4cqmin, 18px);
+  border-radius: 16px;
+  background: var(--s-surface);
+  color: var(--s-fg);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+.s-card--fill {
+  flex: 1 1 0;
+}
+/* `.s-root` is a BLOCK, not a flex container, so `flex: 1 1 0` on a card
+   placed directly under it means nothing at all: the card sizes to its
+   content, the `<Stack>` inside resolves `height: 100%` against that auto
+   height, and the `<Fill>` below has nothing left to take. A birthday card
+   written the obvious way — root, card, stack, fill — therefore had a
+   48-pixel fill on a 758-pixel screen, and its greeting was clipped by the
+   card that was supposed to hold it. A card that says `fill` and is the
+   root's own child now takes the root's height, which is what it says. */
+.s-root > .s-card--fill {
+  height: 100%;
+}
+.s-card--center {
+  align-items: center;
+  justify-content: safe center;
+  text-align: center;
+}
+/* Text inside a card takes the card's colour, whatever variant it is. */
+.s-card .s-text,
+.s-card .s-hero {
+  color: var(--s-fg);
+}
+.s-card .s-text--caption,
+.s-card .s-meta {
+  color: var(--s-fg-muted);
+}
+/* Every kit control on a vivid tone is frosted glass in the card's colour;
+   a Choice keeping the theme's grey "0 голосів" on purple read 1.6:1
+   (lab, 2026-09-18). */
+.s-card[data-tone-vivid] .s-choice,
+.s-card[data-tone-vivid] .s-check,
+.s-card[data-tone-vivid] .s-counter,
+.s-card[data-tone-vivid] .s-input {
+  background: rgb(0 0 0 / 0.22);
+  color: var(--s-fg);
+  border-color: transparent;
+}
+.s-card[data-tone-vivid] .s-choice__share,
+.s-card[data-tone-vivid] .s-choice__label,
+.s-card[data-tone-vivid] .s-check,
+.s-card[data-tone-vivid] .s-counter__value,
+.s-card[data-tone-vivid] .s-counter button {
+  color: var(--s-fg);
+}
+.s-card[data-tone-vivid] .s-choice--picked {
+  background: rgb(255 255 255 / 0.22);
+}
+.s-card[data-tone-vivid] .s-choice__bar {
+  background: rgb(255 255 255 / 0.28);
+}
+.s-card[data-tone-vivid] .s-progress {
+  background: rgb(0 0 0 / 0.25);
+}
+
+/* A secondary button on a vivid tone is a frosted pill, not the theme's grey. */
+.s-card[data-tone-vivid] .s-button--secondary {
+  /* Darker glass, not lighter: white text on a lightened tone fell to
+     3.4:1 (lab, 2026-09-18); on a darkened one it clears 6:1 everywhere. */
+  background: rgb(0 0 0 / 0.28);
+  color: var(--s-fg);
+  border: 0;
+}
+.s-card[data-tone-vivid] .s-button--primary {
+  background: rgb(255 255 255 / 0.92);
+  color: #1c1c1e;
+}
+
+/* Vivid: white text, the same in both themes. Every stop is dark enough
+   that white clears 5:1 and the muted white 4.3:1 at the WORST stop —
+   measured, not eyeballed (tones.html, 2026-09-18). A lighter, prettier
+   orange at 3.5:1 is a caption nobody can read outdoors. */
+.s-card[data-tone="sunset"] { --s-surface: linear-gradient(135deg, #c2410c, #9d174d 60%, #4c1d95); }
+.s-card[data-tone="ocean"]  { --s-surface: linear-gradient(135deg, #0369a1, #1d4ed8 55%, #5b21b6); }
+.s-card[data-tone="forest"] { --s-surface: linear-gradient(135deg, #15803d, #0f766e 60%, #164e63); }
+.s-card[data-tone="berry"]  { --s-surface: linear-gradient(135deg, #be185d, #7e22ce 60%, #3730a3); }
+.s-card[data-tone="gold"]   { --s-surface: linear-gradient(135deg, #b45309, #92400e 55%, #713f12); }
+.s-card[data-tone="night"]  { --s-surface: linear-gradient(160deg, #1e1b4b, #0f172a 60%, #020617); }
+.s-card[data-tone="sunset"], .s-card[data-tone="ocean"], .s-card[data-tone="forest"],
+.s-card[data-tone="berry"], .s-card[data-tone="gold"], .s-card[data-tone="night"] {
+  --s-fg: #ffffff;
+  --s-fg-muted: rgb(255 255 255 / 0.92);
+}
+
+/* Quiet: the theme's own surfaces and text. */
+.s-card[data-tone="paper"] { --s-surface: var(--cpd-color-bg-canvas-default); }
+.s-card[data-tone="mint"]  { --s-surface: var(--cpd-color-bg-success-subtle); }
+.s-card[data-tone="sky"]   { --s-surface: var(--cpd-color-bg-info-subtle); }
+.s-card[data-tone="rose"]  { --s-surface: var(--cpd-color-bg-critical-subtle); }
+.s-card[data-tone="sand"]  { --s-surface: var(--cpd-color-bg-accent-subtle); }
+
+/* ------------------------------------------------------------------ motion
+
+   CSS only, on transform and opacity (§ 5.37). A card ARRIVES rather than
+   appears; a greeting FLOATS; a result POPS. All three respect the OS's
+   reduced-motion setting through the rule at the bottom of this file. */
+@keyframes s-rise {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes s-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  70%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: none; }
+}
+@keyframes s-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes s-shimmer {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}
+.s-rise  { animation: s-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.s-pop   { animation: s-pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.s-float { animation: s-float 3s ease-in-out infinite; }
+.s-shimmer {
+  background-size: 200% 200%;
+  animation: s-shimmer 6s ease-in-out infinite alternate;
+}
+.s-delay-1 { animation-delay: 0.12s; }
+.s-delay-2 { animation-delay: 0.24s; }
+.s-delay-3 { animation-delay: 0.36s; }
+/* The rule the motion comment promised and the file did not have (§ 5.80):
+   a person who asked for less motion gets the end state at once. */
+@media (prefers-reduced-motion: reduce) {
+  .s-rise, .s-pop, .s-float, .s-shimmer { animation: none; }
+}
+
+/* The mini / full split. Shown, the wrapper is `contents` so a Stack's gap
+   does not see it; hidden, it is gone. A missing attribute is a row — the
+   bootstrap sets it before the app mounts, but the harness may not. */
+.s-only {
+  display: contents;
+}
+html:not([data-spiral-viewport="expanded"]) .s-only--expanded,
+html[data-spiral-viewport="expanded"] .s-only--row {
+  display: none;
+}
+
+/* A square that fits: the smaller of the box's sides, minus room for a title
+   and a row of controls. What a wheel, a board or a dice sits in. */
+.s-square {
+  width: min(100%, var(--s-square-size, 56cqmin));
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  align-self: center;
+  position: relative;
+}
+.s-square--large {
+  --s-square-size: 80cqmin;
+}
+/* Inside a Stack a square takes WHAT IS LEFT, like a board: the wheel that
+   was 225 px in a 402×758 viewer, over a third of a screen of nothing (lab,
+   2026-09-18), now grows to the width. Outside a Stack the share above
+   still applies — there is no "what is left" to measure. */
+.s-stack > .s-square {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  width: auto;
+  max-width: 100%;
+  max-height: 100cqw;
+}
+.s-stack > .s-square--large {
+  max-width: 100%;
+}
+
+/* A number or a word meant to be read from across the room. */
+.s-hero {
+  font-size: clamp(22px, 14cqmin, 64px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+/* Only the full-screen viewer scrolls; a row never does — a swipe on a row
+   belongs to the timeline. The document attribute is set by the bootstrap
+   from the host's `viewport.changed`. */
+.s-scroll {
+  overflow: hidden;
+  min-height: 0;
+}
+html[data-spiral-viewport="expanded"] .s-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Text sizes step with the box, within reason. */
+.s-text--title {
+  font-size: clamp(15px, 6.5cqmin, 22px);
+}
+.s-text--body {
+  font-size: clamp(13px, 5cqmin, 17px);
+}
+.s-text--caption,
+.s-meta {
+  font-size: clamp(11px, 4cqmin, 14px);
+}
+
+/* ONE COLOUR TO PAINT WITH.
+
+   Two sizes, deliberately apart: the DOT is what you see and the BUTTON is
+   what you hit. A palette of eight has to fit a 322-point row, so the dot
+   steps down with the box like everything else; the target underneath it
+   never goes below the 40 px every control keeps. Hand-written swatches
+   came out 24 × 24 — small enough for the ruler to refuse and for a finger
+   to miss. */
+.s-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: clamp(40px, 13cqmin, 44px);
+  min-height: clamp(40px, 13cqmin, 44px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.s-swatch__dot {
+  width: clamp(22px, 7cqmin, 28px);
+  height: clamp(22px, 7cqmin, 28px);
+  border-radius: 999px;
+  background: var(--s-swatch);
+  box-shadow: inset 0 0 0 1.5px rgb(0 0 0 / 0.18);
+  transition: width 0.12s ease, height 0.12s ease, box-shadow 0.12s ease;
+}
+/* The chosen one grows into its target rather than sprouting a ring that
+   would push its neighbours apart. */
+.s-swatch--picked .s-swatch__dot {
+  width: clamp(30px, 10cqmin, 38px);
+  height: clamp(30px, 10cqmin, 38px);
+  box-shadow:
+    inset 0 0 0 1.5px rgb(0 0 0 / 0.18),
+    0 0 0 3px var(--cpd-color-bg-action-primary-rest);
+}
+
+/* ACCENTS — colour that MEANS something, and is legible either way.
+
+   When a post must tell things apart by colour — a chart's series, two
+   players, the categories of a list — it has been inventing hexes, and they
+   fail: a player's name at 1.9:1 in `drag-dots`, a chart's legend at 1.9:1
+   in `probe-chart`, twice in independent generations. The prompt's "never
+   set a colour" is right about decoration and useless here, because the
+   colour IS the information.
+
+   So the kit keeps six, each one MEASURED against the row's own surface in
+   both themes — the worst in the set is 4.81:1 where body text needs 4.5 —
+   and picked by index rather than by taste. They differ by HUE, not by
+   lightness, which is what lets them all clear the same bar; colour alone
+   therefore never carries the meaning, and a label or a shape goes with it. */
+:root {
+  --s-accent-1: #1d4ed8;
+  --s-accent-2: #b91c1c;
+  --s-accent-3: #166534;
+  --s-accent-4: #6d28d9;
+  --s-accent-5: #854d0e;
+  --s-accent-6: #0f766e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --s-accent-1: #93c5fd;
+    --s-accent-2: #fca5a5;
+    --s-accent-3: #86efac;
+    --s-accent-4: #c4b5fd;
+    --s-accent-5: #fcd34d;
+    --s-accent-6: #5eead4;
+  }
+}
+
+/* LEADERBOARD (§ 5.75) — one row per player: place, face, name, score. The
+   name gives way (ellipsis) before the score does; the viewer's row is set
+   apart by weight and a tint rather than a frame. */
+.s-leaderboard__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+.s-leaderboard__row--me {
+  background: var(--cpd-color-bg-subtle-primary);
+  font-weight: 600;
+}
+.s-leaderboard__place {
+  width: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--s-fg-muted, var(--cpd-color-text-secondary));
+  flex: none;
+}
+.s-leaderboard__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.s-leaderboard__score {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ scenes
+
+   A POST IS A SCENE (§ 5.76). The operator, 2026-09-30: «we put every post
+   in a frame and now they all look alike». A scene is the post's own look —
+   a background to the bubble's edge, a face for titles, the ink measured
+   against that background, and the kit's controls drawn for it — so a game
+   looks like a game and a greeting like a party, and still no line is
+   unreadable.
+
+   Every ink below is measured at the WORST point of its background
+   (scripts: /tmp/palette.mjs, 2026-09-30): body text ≥ 5:1 everywhere,
+   captions ≥ 4.5:1, a primary button's label ≥ 6:1. The scenes are the
+   same in both themes, the way a photo is.
+
+   The faces are iOS's own, each checked for Cyrillic in the post frame on
+   iOS 26 (layout lab, 2026-09-30): ui-rounded, ui-serif, ui-monospace,
+   Noteworthy, Marker Felt, DIN Condensed, DIN Alternate. macOS has the same
+   ones, so the ruler measures what the phone draws. */
+
+/* The defaults sit on `.s-scene` ALONE, before the themes: on
+   `.s-root.s-scene` they outranked every theme's own face, and all eight
+   scenes drew in the system font (first cut, 2026-09-30). */
+.s-scene {
+  --s-font: ui-rounded, -apple-system, system-ui, sans-serif;
+  --s-font-display: var(--s-font);
+  --s-display-weight: 800;
+  --s-display-case: none;
+  --s-display-spacing: -0.01em;
+  --s-radius: 14px;
+}
+.s-root.s-scene {
+  background: var(--s-bg);
+  color: var(--s-fg);
+  font-family: var(--s-font);
+  padding: 12px;
+}
+.s-root.s-scene.s-scene--flush {
+  padding: 0;
+}
+/* The exercise book keeps its margin: `.s-root.s-scene` above outranked the
+   paper scene's own `padding-left`, and the red margin line ran through the
+   first letter of every line on it (§ 5.80). */
+.s-root.s-scene.s-scene--paper:not(.s-scene--flush) {
+  padding-left: 30px;
+}
+
+/* Ink */
+.s-scene .s-text,
+.s-scene .s-hero,
+.s-scene .s-check,
+.s-scene .s-counter__value,
+.s-scene .s-choice__label,
+.s-scene .s-leaderboard__name,
+.s-scene .s-leaderboard__score {
+  color: var(--s-fg);
+}
+.s-scene .s-text--caption,
+.s-scene .s-meta,
+.s-scene .s-choice__share,
+.s-scene .s-input__label,
+.s-scene .s-leaderboard__place,
+.s-scene .s-check--done .s-check__label {
+  color: var(--s-fg-muted);
+}
+.s-scene .s-text--title,
+.s-scene .s-hero {
+  font-family: var(--s-font-display);
+  font-weight: var(--s-display-weight);
+  text-transform: var(--s-display-case);
+  letter-spacing: var(--s-display-spacing);
+}
+
+/* Controls — the scene's own: the accent for the one primary action, the
+   scene's glass for the rest. */
+.s-scene .s-button {
+  border-radius: var(--s-radius);
+}
+.s-scene .s-button--primary {
+  background: var(--s-accent);
+  color: var(--s-on-accent);
+}
+.s-scene .s-button--primary:active:not(:disabled) {
+  filter: brightness(0.92);
+}
+.s-scene .s-button--secondary,
+.s-scene .s-counter button {
+  background: var(--s-control);
+  color: var(--s-fg);
+}
+.s-scene .s-button--secondary:active:not(:disabled),
+.s-scene .s-counter button:active:not(:disabled) {
+  background: var(--s-control-strong);
+}
+.s-scene .s-choice {
+  background: var(--s-control);
+  border-color: var(--s-line);
+  border-radius: var(--s-radius);
+}
+.s-scene .s-choice--picked {
+  border-color: var(--s-accent);
+  box-shadow: inset 0 0 0 1px var(--s-accent);
+}
+/* A share of the vote is the scene's accent, faintly, under the label: the
+   glass's own white on white glass was a bar nobody could see (poll, sky,
+   2026-09-30). */
+.s-scene .s-choice__fill {
+  background: color-mix(in srgb, var(--s-accent) 22%, transparent);
+}
+.s-scene .s-check__box {
+  border-color: var(--s-fg-muted);
+}
+.s-scene .s-check--done .s-check__box {
+  border-color: var(--s-accent);
+  background: var(--s-accent);
+  color: var(--s-on-accent);
+}
+.s-scene .s-input__field {
+  background: var(--s-control);
+  border-color: var(--s-line);
+  color: var(--s-fg);
+}
+.s-scene .s-progress {
+  background: var(--s-control);
+}
+.s-scene .s-progress__fill {
+  background: var(--s-accent);
+}
+.s-scene .s-list--separated > li + li {
+  border-top-color: var(--s-line);
+}
+.s-scene .s-leaderboard__row--me {
+  background: var(--s-control);
+}
+.s-scene .s-swatch--picked .s-swatch__dot {
+  box-shadow:
+    inset 0 0 0 1.5px rgb(0 0 0 / 0.18),
+    0 0 0 3px var(--s-accent);
+}
+
+/* A condensed face draws a size smaller than it is set: the same 22 px
+   title in DIN Condensed stood a third lower than in the rounded face. */
+.s-scene--poster .s-text--title,
+.s-scene--field .s-text--title {
+  font-size: clamp(19px, 8.5cqmin, 29px);
+}
+.s-scene--poster .s-hero,
+.s-scene--field .s-hero {
+  font-size: clamp(30px, 19cqmin, 84px);
+}
+
+/* On paper a glass control is white on cream — nearly nothing; it gets
+   the ruled line's colour for an edge instead. */
+.s-scene--paper .s-button--secondary,
+.s-scene--paper .s-counter button {
+  box-shadow: inset 0 0 0 1.5px #94a3b8;
+}
+
+/* A number a Counter keeps is the scene's number: in its display face. */
+.s-scene .s-counter__value {
+  font-family: var(--s-font-display);
+  font-weight: var(--s-display-weight);
+  font-size: 1.25em;
+}
+
+.s-scene--poster .s-counter__value,
+.s-scene--field .s-counter__value {
+  font-size: 1.6em;
+}
+
+/* A small label on the scene's glass: a title chip over a game, a score. */
+.s-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--s-control-strong, rgb(0 0 0 / 0.4));
+  color: var(--s-fg, #ffffff);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* TEXT OVER A PICTURE — a score over a game, a name over a photo-like card.
+   What is under it is a canvas the ruler cannot see, so the edge is its own:
+   white, with a dark outline painted UNDER the fill. The ruler measures the
+   better of fill and outline, which is the edge a reader actually sees. */
+.s-hud {
+  color: #ffffff;
+  -webkit-text-stroke: 0.16em rgb(15 23 42 / 0.9);
+  paint-order: stroke fill;
+  font-weight: 800;
+}
+
+/* Dark scenes: dark glass. Light scenes: light glass. */
+.s-scene--arcade,
+.s-scene--board,
+.s-scene--party,
+.s-scene--field,
+.s-scene--night {
+  --s-control: rgb(0 0 0 / 0.24);
+  --s-control-strong: rgb(0 0 0 / 0.38);
+  --s-line: rgb(255 255 255 / 0.28);
+}
+.s-scene--paper,
+.s-scene--poster,
+.s-scene--sky {
+  --s-control: rgb(255 255 255 / 0.62);
+  --s-control-strong: rgb(255 255 255 / 0.9);
+  --s-line: rgb(15 23 42 / 0.18);
+}
+
+/* ARCADE — a game against the clock or for a record: a night-blue screen
+   with a faint dot grid, a mono face for the numbers, a yellow button. */
+.s-scene--arcade {
+  --s-bg:
+    radial-gradient(circle, rgb(255 255 255 / 0.07) 1px, transparent 1.5px) 0 0 / 16px 16px,
+    linear-gradient(180deg, #0b1026, #1e3a8a);
+  --s-fg: #ffffff;
+  --s-fg-muted: rgb(255 255 255 / 0.86);
+  --s-accent: #facc15;
+  --s-on-accent: #1a1400;
+  --s-font-display: ui-monospace, "SF Mono", Menlo, monospace;
+  --s-display-spacing: 0;
+  --s-radius: 10px;
+}
+
+/* BOARD — a game for two at a table: walnut, a serif face, a brass accent. */
+.s-scene--board {
+  --s-bg:
+    repeating-linear-gradient(92deg, rgb(255 255 255 / 0.018) 0 2px, transparent 2px 7px),
+    linear-gradient(160deg, #4a2f20, #2b1b12);
+  --s-fg: #f5e9da;
+  --s-fg-muted: #e3cdb4;
+  --s-accent: #e7b56a;
+  --s-on-accent: #2b1b12;
+  --s-font: ui-serif, "New York", Georgia, serif;
+  --s-display-weight: 700;
+  --s-radius: 10px;
+}
+
+/* PAPER — a school notebook: ruled lines, a red margin, a hand for the
+   words and a marker for the title. */
+.s-scene--paper {
+  --s-bg:
+    linear-gradient(90deg, transparent 20px, #f4a3a3 20px, #f4a3a3 21.5px, transparent 21.5px),
+    repeating-linear-gradient(180deg, transparent 0 23px, #cfe0f5 23px 24px),
+    #fffcf2;
+  --s-fg: #1e293b;
+  --s-fg-muted: #475569;
+  --s-accent: #1d4ed8;
+  --s-on-accent: #ffffff;
+  --s-font: Noteworthy, "Marker Felt", ui-rounded, system-ui, sans-serif;
+  --s-font-display: "Marker Felt", Noteworthy, ui-rounded, system-ui, sans-serif;
+  --s-display-weight: 400;
+  --s-radius: 12px;
+  padding-left: 30px;
+  line-height: 1.3;
+}
+
+/* PARTY — a greeting, a toast, a win: wine to rust under a warm glow,
+   confetti, a marker headline and a white button. Deeper than a birthday
+   card's pink would be, on purpose: on the brighter #be123c → #c2410c no
+   hue but near-white cleared 4.5:1, so six players' colours were six
+   whites (2026-09-30). */
+.s-scene--party {
+  --s-bg:
+    radial-gradient(circle at 12% 16%, rgb(253 224 71 / 0.9) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 86% 10%, rgb(255 255 255 / 0.85) 0 2.5px, transparent 3px),
+    radial-gradient(circle at 74% 30%, rgb(94 234 212 / 0.9) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 8% 62%, rgb(255 255 255 / 0.8) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 92% 70%, rgb(253 224 71 / 0.9) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 30% 90%, rgb(94 234 212 / 0.85) 0 2.5px, transparent 3px),
+    radial-gradient(ellipse 80% 55% at 50% 0%, rgb(251 113 133 / 0.32), transparent 72%),
+    linear-gradient(135deg, #881337, #7c2d12);
+  --s-fg: #ffffff;
+  --s-fg-muted: rgb(255 255 255 / 0.92);
+  --s-accent: #ffffff;
+  --s-on-accent: #881337;
+  --s-font-display: "Marker Felt", ui-rounded, system-ui, sans-serif;
+  --s-display-weight: 700;
+  --s-radius: 999px;
+}
+
+/* POSTER — a date, a number, an announcement: yellow stock, a halftone,
+   condensed capitals. */
+.s-scene--poster {
+  --s-bg:
+    radial-gradient(circle, rgb(0 0 0 / 0.06) 1px, transparent 1.5px) 0 0 / 10px 10px,
+    #fde047;
+  --s-fg: #111111;
+  --s-fg-muted: #3f3a12;
+  --s-accent: #111111;
+  --s-on-accent: #fde047;
+  --s-font: "DIN Alternate", ui-rounded, system-ui, sans-serif;
+  --s-font-display: "DIN Condensed", "DIN Alternate", system-ui, sans-serif;
+  --s-display-weight: 700;
+  --s-display-case: uppercase;
+  --s-display-spacing: 0.04em;
+  --s-radius: 6px;
+}
+
+/* SKY — a question for everyone, a mood, a plan: soft clouds on blue, a
+   rounded face. The default. */
+.s-scene--sky {
+  --s-bg:
+    radial-gradient(ellipse 34% 11% at 84% 10%, rgb(255 255 255 / 0.7), transparent 72%),
+    radial-gradient(ellipse 40% 10% at 12% 78%, rgb(255 255 255 / 0.55), transparent 72%),
+    linear-gradient(180deg, #93c5fd, #e0f2fe);
+  --s-fg: #0b2f55;
+  --s-fg-muted: #16457a;
+  --s-accent: #1d4ed8;
+  --s-on-accent: #ffffff;
+}
+
+/* FIELD — a live game for teams: a mown pitch under floodlights, condensed
+   capitals. Dark for the same reason as the party. */
+.s-scene--field {
+  --s-bg: repeating-linear-gradient(90deg, #14532d 0 32px, #104425 32px 64px);
+  --s-fg: #ffffff;
+  --s-fg-muted: #f0fdf4;
+  --s-accent: #ffffff;
+  --s-on-accent: #14532d;
+  --s-font-display: "DIN Condensed", "DIN Alternate", system-ui, sans-serif;
+  --s-display-case: uppercase;
+  --s-display-spacing: 0.03em;
+}
+
+/* NIGHT — something calm and cosy: a pet, a fire, a wish; stars on violet. */
+.s-scene--night {
+  --s-bg:
+    radial-gradient(circle at 14% 18%, rgb(255 255 255 / 0.9) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 42% 8%, rgb(255 255 255 / 0.7) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 76% 22%, rgb(255 255 255 / 0.85) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 90% 54%, rgb(255 255 255 / 0.6) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 6% 64%, rgb(255 255 255 / 0.6) 0 1px, transparent 1.5px),
+    linear-gradient(180deg, #1e1b4b, #4c1d95);
+  --s-fg: #ffffff;
+  --s-fg-muted: #ddd6fe;
+  --s-accent: #fbbf24;
+  --s-on-accent: #1e1b4b;
+}
+
+/* A SCENE'S OWN SIX (§ 5.76). The row's six above are measured against the
+   row's grey; a scene has its own background, so it has its own six — the
+   same hues, as light or as dark as that background needs for 4.6:1 at its
+   worst point (/tmp/accents.mjs, 2026-09-30). `accent(i)` names the
+   variable, so a player's colour is right in whatever scene it is used. */
+.s-scene--arcade { --s-accent-1: #8faff5; --s-accent-2: #f29797; --s-accent-3: #3cdd77; --s-accent-4: #bea0f3; --s-accent-5: #f4a825; --s-accent-6: #36e2ce; }
+.s-scene--board  { --s-accent-1: #789ff2; --s-accent-2: #ef8080; --s-accent-3: #3cdd77; --s-accent-4: #b28ef1; --s-accent-5: #f4a825; --s-accent-6: #36e2ce; }
+.s-scene--paper  { --s-accent-1: #1450d2; --s-accent-2: #bf1818; --s-accent-3: #136c34; --s-accent-4: #5b19cc; --s-accent-5: #835507; --s-accent-6: #0f6b60; }
+.s-scene--party  { --s-accent-1: #98b6f5; --s-accent-2: #f3a0a0; --s-accent-3: #3cdd77; --s-accent-4: #c4a9f4; --s-accent-5: #f4a825; --s-accent-6: #36e2ce; }
+.s-scene--poster { --s-accent-1: #134cc9; --s-accent-2: #ac1515; --s-accent-3: #126430; --s-accent-4: #5b19cc; --s-accent-5: #794f06; --s-accent-6: #0e6258; }
+.s-scene--sky    { --s-accent-1: #1043b1; --s-accent-2: #9a1313; --s-accent-3: #0f5729; --s-accent-4: #5b19cc; --s-accent-5: #6b4606; --s-accent-6: #0c554c; }
+.s-scene--field  { --s-accent-1: #9db9f6; --s-accent-2: #f4a4a4; --s-accent-3: #3cdd77; --s-accent-4: #c8adf5; --s-accent-5: #f4ac2f; --s-accent-6: #36e2ce; }
+.s-scene--night  { --s-accent-1: #86a9f4; --s-accent-2: #f18e8e; --s-accent-3: #3cdd77; --s-accent-4: #bb9bf3; --s-accent-5: #f4a825; --s-accent-6: #36e2ce; }
+

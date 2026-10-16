@@ -1,0 +1,275 @@
+import { jsxs, jsx } from "react/jsx-runtime";
+import { useState, useCallback } from "react";
+import { Row, Text, Button, Meta, List } from "@spiral/ui";
+import { Spiral } from "@spiral/sdk";
+const pass = (name, detail) => ({ name, verdict: "pass", detail });
+const fail = (name, detail) => ({ name, verdict: "fail", detail });
+const scratch = (suffix) => [
+  "conformance",
+  `${Date.now().toString(36)}-${suffix}`
+];
+const read = async (path) => {
+  const state = await Spiral.state.get();
+  let value = state;
+  for (const key of path) {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) return void 0;
+    value = value[key];
+  }
+  return value;
+};
+const applyAndRead = async (op, path) => {
+  await Spiral.state.apply(op);
+  return settled(path);
+};
+const settled = async (path) => {
+  let previous = await read(path);
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    const current = await read(path);
+    if (current !== void 0 && JSON.stringify(current) === JSON.stringify(previous)) {
+      return current;
+    }
+    previous = current;
+  }
+  return previous;
+};
+const refused = async (op) => {
+  try {
+    await Spiral.state.apply(op);
+    return void 0;
+  } catch (error) {
+    return String(error);
+  }
+};
+const checkContext = async () => {
+  try {
+    const context = await Spiral.context();
+    const missing = ["userId", "roomId", "postId"].filter(
+      (key) => typeof context[key] !== "string" || context[key].length === 0
+    );
+    return missing.length === 0 ? pass("context", `${context.userId} in ${context.roomId}`) : fail("context", `missing ${missing.join(", ")}`);
+  } catch (error) {
+    return fail("context", String(error));
+  }
+};
+const checkMembersIncludeMe = async () => {
+  try {
+    const [context, members] = await Promise.all([Spiral.context(), Spiral.members()]);
+    const me = members.find((member) => member.userId === context.userId);
+    return me === void 0 ? fail("members-include-me", `${members.length} members, none of them me`) : pass("members-include-me", `${members.length} members, I am "${me.displayName}"`);
+  } catch (error) {
+    return fail("members-include-me", String(error));
+  }
+};
+const checkMembersHaveNames = async () => {
+  try {
+    const members = await Spiral.members();
+    const nameless = members.filter((member) => member.displayName.length === 0);
+    return nameless.length === 0 ? pass("members-have-names", "every member has something to draw") : fail("members-have-names", `${nameless.length} with no name and no fallback`);
+  } catch (error) {
+    return fail("members-have-names", String(error));
+  }
+};
+const checkSet = async () => {
+  const path = scratch("set");
+  const value = await applyAndRead({ set: { path, value: "written" } }, path);
+  return value === "written" ? pass("set", "read back") : fail("set", `read back ${String(value)}`);
+};
+const checkSetIfAbsent = async () => {
+  const path = scratch("first");
+  await Spiral.state.apply({ setIfAbsent: { path, value: "first" } });
+  await settled(path);
+  const value = await applyAndRead({ setIfAbsent: { path, value: "second" } }, path);
+  return value === "first" ? pass("setIfAbsent", "the first write held") : fail("setIfAbsent", `second write won: ${String(value)}`);
+};
+const checkDelete = async () => {
+  const path = scratch("del");
+  await Spiral.state.apply({ set: { path, value: 1 } });
+  await settled(path);
+  await Spiral.state.apply({ del: { path } });
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    if (await read(path) === void 0) return pass("del", "gone");
+  }
+  return fail("del", `still ${String(await read(path))}`);
+};
+const checkIncrement = async () => {
+  const path = scratch("incr");
+  await Spiral.state.apply({ incr: { path, by: 2 } });
+  await settled(path);
+  const value = await applyAndRead({ incr: { path, by: 3 } }, path);
+  return value === 5 ? pass("incr", "2 + 3 = 5 from absent") : fail("incr", `got ${String(value)}`);
+};
+const checkListAppend = async () => {
+  const path = scratch("append");
+  await Spiral.state.apply({ listAppend: { path, item: { id: "a" } } });
+  await settled(path);
+  const value = await applyAndRead({ listAppend: { path, item: { id: "b" } } }, path);
+  return Array.isArray(value) && value.length === 2 ? pass("listAppend", "two items, in order") : fail("listAppend", `got ${JSON.stringify(value)}`);
+};
+const checkListRemove = async () => {
+  const path = scratch("remove");
+  await Spiral.state.apply({ listAppend: { path, item: { id: "a" } } });
+  await Spiral.state.apply({ listAppend: { path, item: { id: "b" } } });
+  await settled(path);
+  const value = await applyAndRead({ listRemove: { path, id: "a" } }, path);
+  const left = Array.isArray(value) ? value : [];
+  return left.length === 1 ? pass("listRemove", "removed by id, kept the rest") : fail("listRemove", `got ${JSON.stringify(value)}`);
+};
+const checkUserKeyedPath = async () => {
+  try {
+    const { userId } = await Spiral.context();
+    const path = [...scratch("per-user"), userId];
+    const value = await applyAndRead({ set: { path, value: "mine" } }, path);
+    return value === "mine" ? pass("user-keyed-path", `wrote and read ${userId}`) : fail("user-keyed-path", `read back ${String(value)}`);
+  } catch (error) {
+    return fail("user-keyed-path", String(error));
+  }
+};
+const checkTime = async () => {
+  try {
+    const before = Date.now();
+    const now = await Spiral.time.now();
+    const drift = now - before;
+    return Math.abs(drift) <= 6e4 ? pass("time", `host clock ${drift >= 0 ? "+" : ""}${drift} ms from the frame's`) : fail("time", `host clock is ${drift} ms from the frame's`);
+  } catch (error) {
+    return fail("time", String(error));
+  }
+};
+const checkOwnedPathIsMine = async () => {
+  try {
+    const { userId } = await Spiral.context();
+    if (Spiral.viewer !== userId) {
+      return fail("owned-path-mine", `SDK viewer ${Spiral.viewer} != host ${userId}`);
+    }
+    const path = Spiral.mine("scratch", "owned");
+    const value = await applyAndRead({ set: { path, value: "mine" } }, path);
+    return value === "mine" ? pass("owned-path-mine", `by.${userId} written and read`) : fail("owned-path-mine", `read back ${String(value)}`);
+  } catch (error) {
+    return fail("owned-path-mine", String(error));
+  }
+};
+const checkOwnedPathIsNotYours = async () => {
+  const reason = await refused({
+    set: { path: ["by", "@nobody:spiral.md", "vote"], value: "forged" }
+  });
+  return reason === void 0 ? fail("owned-path-not-yours", "A WRITE INTO SOMEONE ELSE'S NAMESPACE WAS ACCEPTED") : pass("owned-path-not-yours", `refused: ${reason}`);
+};
+const checkOversizedState = async () => {
+  const reason = await refused({
+    set: { path: scratch("huge"), value: "x".repeat(24 * 1024) }
+  });
+  return reason === void 0 ? fail("oversized-state", "A STATE PAST THE BUDGET WAS ACCEPTED") : pass("oversized-state", `refused: ${reason}`);
+};
+const checkUnknownOperation = async () => {
+  const reason = await refused({ multiply: { path: "x", by: 2 } });
+  return reason === void 0 ? fail("unknown-operation", "AN OPERATION THIS RUNTIME CANNOT CARRY OUT WAS ACCEPTED") : pass("unknown-operation", `refused: ${reason}`);
+};
+const checkRoomWidePing = async () => {
+  try {
+    await Spiral.state.apply({ set: { path: scratch("ping"), value: 1 } }, {
+      notify: "ping"
+    });
+    return fail("room-wide-ping", "A PING WITH NOBODY NAMED WAS ACCEPTED");
+  } catch (error) {
+    return pass("room-wide-ping", `refused: ${String(error)}`);
+  }
+};
+const checkOptimisticApply = async () => {
+  const path = scratch("optimistic");
+  let synchronous = false;
+  let eventual = false;
+  let notifications = 0;
+  const stop = Spiral.state.subscribe(() => {
+    notifications += 1;
+    eventual = true;
+  });
+  const sent = Spiral.state.apply({ set: { path, value: "x" } }).catch(() => void 0);
+  synchronous = eventual;
+  await sent;
+  stop();
+  if (synchronous) {
+    return pass("optimistic-apply", `subscribers saw it before the round trip (${notifications})`);
+  }
+  return fail(
+    "optimistic-apply",
+    eventual ? `only after the host answered (${notifications} notifications)` : "never notified at all"
+  );
+};
+const checkAuthoritativeWins = async () => {
+  const path = scratch("rollback");
+  await refused({ set: { path, value: "x".repeat(24 * 1024) } });
+  const value = await read(path);
+  return value === void 0 ? pass("rollback", "the refused write left nothing behind") : fail("rollback", `the optimistic value survived: ${String(value)}`);
+};
+const runConformance = async () => [
+  {
+    group: "context",
+    results: [await checkContext(), await checkMembersIncludeMe(), await checkMembersHaveNames(), await checkTime()]
+  },
+  {
+    group: "operations",
+    results: [
+      await checkSet(),
+      await checkSetIfAbsent(),
+      await checkDelete(),
+      await checkIncrement(),
+      await checkListAppend(),
+      await checkListRemove(),
+      await checkUserKeyedPath(),
+      await checkOwnedPathIsMine(),
+      await checkOwnedPathIsNotYours()
+    ]
+  },
+  {
+    group: "limits",
+    results: [
+      await checkOversizedState(),
+      await checkUnknownOperation(),
+      await checkRoomWidePing()
+    ]
+  },
+  {
+    group: "behaviour",
+    results: [await checkOptimisticApply(), await checkAuthoritativeWins()]
+  }
+];
+function Conformance() {
+  const [phase, setPhase] = useState({ kind: "idle" });
+  const run = useCallback(() => {
+    setPhase({ kind: "running" });
+    void runConformance().then((groups) => setPhase({ kind: "done", groups })).catch((error) => {
+      setPhase({
+        kind: "done",
+        groups: [
+          {
+            group: "harness",
+            results: [{ name: "run", verdict: "fail", detail: String(error) }]
+          }
+        ]
+      });
+    });
+  }, []);
+  const failures = phase.kind === "done" ? phase.groups.flatMap((group) => group.results).filter((r) => r.verdict === "fail").length : 0;
+  return /* @__PURE__ */ jsxs("div", { className: "s-root", style: { padding: 16, display: "grid", gap: 12 }, children: [
+    /* @__PURE__ */ jsxs(Row, { between: true, children: [
+      /* @__PURE__ */ jsx(Text, { variant: "title", children: "Conformance" }),
+      phase.kind === "done" && /* @__PURE__ */ jsx(Text, { variant: "caption", children: failures === 0 ? "all passed" : `${failures} failed` })
+    ] }),
+    /* @__PURE__ */ jsx(Row, { children: /* @__PURE__ */ jsx(Button, { onPress: run, disabled: phase.kind === "running", children: phase.kind === "running" ? "Running…" : "Run" }) }),
+    phase.kind === "idle" && /* @__PURE__ */ jsx(Meta, { children: "Writes real actions into this post. Every check is a Matrix event." }),
+    phase.kind === "done" && phase.groups.map((group) => /* @__PURE__ */ jsxs("div", { style: { display: "grid", gap: 4 }, children: [
+      /* @__PURE__ */ jsx(Text, { variant: "caption", children: group.group }),
+      /* @__PURE__ */ jsx(List, { items: group.results, keyOf: (result) => result.name, separated: true, children: (result) => /* @__PURE__ */ jsxs("div", { style: { padding: "6px 0" }, children: [
+        /* @__PURE__ */ jsxs(Row, { between: true, children: [
+          /* @__PURE__ */ jsx(Text, { children: result.name }),
+          /* @__PURE__ */ jsx(Text, { variant: "caption", children: result.verdict })
+        ] }),
+        /* @__PURE__ */ jsx(Text, { variant: "caption", children: result.detail })
+      ] }) })
+    ] }, group.group))
+  ] });
+}
+export {
+  Conformance as default
+};

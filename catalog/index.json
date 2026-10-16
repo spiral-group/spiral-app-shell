@@ -1,0 +1,503 @@
+{
+  "version": 1,
+  "runtime": "1",
+  "sections": [
+    {
+      "id": "decide",
+      "title": "Вирішити",
+      "items": [
+        "who-wheel",
+        "dice",
+        "poll",
+        "split",
+        "mood"
+      ],
+      "titles": {
+        "ru": "Решить",
+        "en": "Decide"
+      }
+    },
+    {
+      "id": "two",
+      "title": "Вдвох",
+      "items": [
+        "tic-tac-toe",
+        "chess",
+        "four-in-row",
+        "dots",
+        "rps",
+        "sea-battle"
+      ],
+      "titles": {
+        "ru": "Вдвоём",
+        "en": "For two"
+      }
+    },
+    {
+      "id": "record",
+      "title": "На рекорд",
+      "items": [
+        "flappy",
+        "dino",
+        "lumberjack"
+      ],
+      "titles": {
+        "ru": "На рекорд",
+        "en": "High scores"
+      }
+    },
+    {
+      "id": "live",
+      "title": "Наживо",
+      "items": [
+        "tug-of-war",
+        "reaction"
+      ],
+      "titles": {
+        "ru": "Вживую",
+        "en": "Live"
+      }
+    },
+    {
+      "id": "cartoons",
+      "title": "Мультики",
+      "items": [
+        "aquarium",
+        "cat-button",
+        "campfire",
+        "tamagotchi"
+      ],
+      "titles": {
+        "ru": "Мультики",
+        "en": "Cartoons"
+      }
+    },
+    {
+      "id": "celebrate",
+      "title": "Привітати",
+      "items": [
+        "card",
+        "countdown"
+      ],
+      "titles": {
+        "ru": "Поздравить",
+        "en": "Celebrate"
+      }
+    },
+    {
+      "id": "play",
+      "title": "Пограти",
+      "items": [
+        "quiz",
+        "scoreboard"
+      ],
+      "titles": {
+        "ru": "Поиграть",
+        "en": "Play"
+      }
+    },
+    {
+      "id": "draw",
+      "title": "Помалювати",
+      "items": [
+        "paint"
+      ],
+      "titles": {
+        "ru": "Порисовать",
+        "en": "Draw"
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "who-wheel",
+      "title": "Колесо «Хто?»",
+      "description": "Колесо з іменами всіх у кімнаті — зупиняється на одному для всіх",
+      "aspect": "1:1",
+      "source": "who-wheel.jsx",
+      "titles": {
+        "ru": "Колесо «Кто?»",
+        "en": "Who's-it wheel"
+      },
+      "descriptions": {
+        "ru": "Колесо с именами всех в комнате — останавливается на одном для всех",
+        "en": "A wheel of everyone's names that stops on the same one for all"
+      }
+    },
+    {
+      "id": "dice",
+      "title": "Кубик",
+      "description": "Кидок d6, видно, хто скільки викинув",
+      "aspect": "1:1",
+      "source": "dice.jsx",
+      "titles": {
+        "ru": "Кубик",
+        "en": "Dice"
+      },
+      "descriptions": {
+        "ru": "Бросок d6, видно, кто сколько выбросил",
+        "en": "Roll a d6 and see who rolled what"
+      }
+    },
+    {
+      "id": "scoreboard",
+      "title": "Табло",
+      "description": "Очки для всіх у кімнаті",
+      "aspect": "4:3",
+      "source": "scoreboard.jsx",
+      "titles": {
+        "ru": "Табло",
+        "en": "Scoreboard"
+      },
+      "descriptions": {
+        "ru": "Очки для всех в комнате",
+        "en": "Points for everyone in the room"
+      }
+    },
+    {
+      "id": "tic-tac-toe",
+      "title": "Хрестики-нулики",
+      "description": "Перші двоє, хто торкнеться, грають; решта дивиться",
+      "aspect": "1:1",
+      "source": "tic-tac-toe.jsx",
+      "titles": {
+        "ru": "Крестики-нолики",
+        "en": "Tic-tac-toe"
+      },
+      "descriptions": {
+        "ru": "Первые двое, кто коснётся, играют; остальные смотрят",
+        "en": "The first two to touch the board play; the rest watch"
+      }
+    },
+    {
+      "id": "quiz",
+      "title": "Вікторина",
+      "description": "Три питання про столиці, результати всіх поруч",
+      "aspect": "4:3",
+      "source": "quiz.jsx",
+      "titles": {
+        "ru": "Викторина",
+        "en": "Quiz"
+      },
+      "descriptions": {
+        "ru": "Три вопроса о столицах, результаты всех рядом",
+        "en": "Three capital-city questions, everyone's score beside"
+      }
+    },
+    {
+      "id": "chess",
+      "title": "Шахи на двох",
+      "description": "Повна партія: рокіровка, взяття на проході, мат",
+      "aspect": "1:1",
+      "source": "chess.jsx",
+      "titles": {
+        "ru": "Шахматы на двоих",
+        "en": "Chess for two"
+      },
+      "descriptions": {
+        "ru": "Полная партия: рокировка, взятие на проходе, мат",
+        "en": "A full game: castling, en passant, checkmate"
+      }
+    },
+    {
+      "id": "paint",
+      "title": "Малювалка",
+      "description": "Спільний аркуш у зошиті, шість фарб, видно всім",
+      "aspect": "1:1",
+      "source": "paint.jsx",
+      "titles": {
+        "ru": "Рисовалка",
+        "en": "Doodle together"
+      },
+      "descriptions": {
+        "ru": "Общий лист в тетради, шесть красок, видно всем",
+        "en": "A shared sheet in a notebook, six paints, seen by all"
+      }
+    },
+    {
+      "id": "poll",
+      "title": "Голосування з іменами",
+      "description": "Видно, хто за що; голос можна змінити",
+      "aspect": "4:3",
+      "source": "poll.jsx",
+      "titles": {
+        "ru": "Голосование с именами",
+        "en": "Poll with names"
+      },
+      "descriptions": {
+        "ru": "Видно, кто за что; голос можно изменить",
+        "en": "See who voted for what; votes can change"
+      },
+      "asks": {
+        "uk": "Яке питання і які варіанти відповіді?",
+        "ru": "Какой вопрос и какие варианты ответа?",
+        "en": "What's the question, and what are the options?"
+      }
+    },
+    {
+      "id": "card",
+      "title": "Листівка",
+      "description": "Привітання для всієї кімнати, з лічильником",
+      "aspect": "1:1",
+      "source": "card.jsx",
+      "titles": {
+        "ru": "Открытка",
+        "en": "Greeting card"
+      },
+      "descriptions": {
+        "ru": "Поздравление для всей комнаты, со счётчиком",
+        "en": "A greeting for the whole room, with a counter"
+      },
+      "asks": {
+        "uk": "Кого вітаємо і з якої нагоди?",
+        "ru": "Кого поздравляем и по какому поводу?",
+        "en": "Who is it for, and what's the occasion?"
+      }
+    },
+    {
+      "id": "countdown",
+      "title": "Відлік до події",
+      "description": "Дні й години до події, і хто чекає разом",
+      "aspect": "1:1",
+      "source": "countdown.jsx",
+      "titles": {
+        "ru": "Отсчёт до события",
+        "en": "Countdown to an event"
+      },
+      "descriptions": {
+        "ru": "Дни и часы до события, и кто ждёт вместе",
+        "en": "Days and hours to an event, and who waits together"
+      },
+      "asks": {
+        "uk": "До якої події рахуємо і коли вона (дата й час)?",
+        "ru": "До какого события считаем и когда оно (дата и время)?",
+        "en": "What event are we counting down to, and when is it (date and time)?"
+      }
+    },
+    {
+      "id": "split",
+      "title": "Розділити рахунок",
+      "description": "Сума, чайові, порівну — і всі бачать одне число",
+      "aspect": "4:3",
+      "source": "split.jsx",
+      "titles": {
+        "ru": "Разделить счёт",
+        "en": "Split the bill"
+      },
+      "descriptions": {
+        "ru": "Сумма, чаевые, поровну — и все видят одно число",
+        "en": "Amount, tip, even split — one number everyone sees"
+      }
+    },
+    {
+      "id": "mood",
+      "title": "Настрій кімнати",
+      "description": "Кожен ставить емодзі, видно, як у всіх",
+      "aspect": "4:3",
+      "source": "mood.jsx",
+      "titles": {
+        "ru": "Настроение комнаты",
+        "en": "Room mood"
+      },
+      "descriptions": {
+        "ru": "Каждый ставит эмодзи, видно, как у всех",
+        "en": "Everyone picks an emoji; see how the room feels"
+      }
+    },
+    {
+      "id": "four-in-row",
+      "title": "Чотири в ряд",
+      "description": "Червоні проти жовтих; про ваш хід скаже сповіщення",
+      "aspect": "1:1",
+      "source": "four-in-row.jsx",
+      "titles": {
+        "ru": "Четыре в ряд",
+        "en": "Four in a row"
+      },
+      "descriptions": {
+        "ru": "Красные против жёлтых; о вашем ходе скажет уведомление",
+        "en": "Red against yellow; a notification says it is your move"
+      }
+    },
+    {
+      "id": "dots",
+      "title": "Крапки й квадрати",
+      "description": "Хто закрив квадрат, ходить ще раз",
+      "aspect": "1:1",
+      "source": "dots.jsx",
+      "titles": {
+        "ru": "Точки и квадраты",
+        "en": "Dots and boxes"
+      },
+      "descriptions": {
+        "ru": "Кто закрыл квадрат, ходит ещё раз",
+        "en": "Close a box and you go again"
+      }
+    },
+    {
+      "id": "flappy",
+      "title": "Пташка",
+      "description": "Між трубами на рекорд; чат веде таблицю",
+      "aspect": "1:1",
+      "source": "flappy.jsx",
+      "titles": {
+        "ru": "Птичка",
+        "en": "Birdie"
+      },
+      "descriptions": {
+        "ru": "Между трубами на рекорд; чат ведёт таблицу",
+        "en": "Through the pipes for a record; the chat keeps the table"
+      }
+    },
+    {
+      "id": "dino",
+      "title": "Динозаврик",
+      "description": "Стрибайте через кактуси; рекорд побитий — власнику скажуть",
+      "aspect": "1:1",
+      "source": "dino.jsx",
+      "titles": {
+        "ru": "Динозаврик",
+        "en": "Dino run"
+      },
+      "descriptions": {
+        "ru": "Прыгайте через кактусы; рекорд побит — владельцу скажут",
+        "en": "Jump the cacti; beat a record and its holder hears about it"
+      }
+    },
+    {
+      "id": "lumberjack",
+      "title": "Лісоруб",
+      "description": "Рубайте стовбур і не під гілку; таблиця чату",
+      "aspect": "1:1",
+      "source": "lumberjack.jsx",
+      "titles": {
+        "ru": "Лесоруб",
+        "en": "Lumberjack"
+      },
+      "descriptions": {
+        "ru": "Рубите ствол и не под ветку; таблица чата",
+        "en": "Chop the trunk, dodge the branches; the chat's table"
+      }
+    },
+    {
+      "id": "tug-of-war",
+      "title": "Перетягування каната",
+      "description": "Дві команди наживо: хто частіше торкається, той перетягне",
+      "aspect": "1:1",
+      "source": "tug-of-war.jsx",
+      "titles": {
+        "ru": "Перетягивание каната",
+        "en": "Tug of war"
+      },
+      "descriptions": {
+        "ru": "Две команды вживую: кто чаще касается, тот перетянет",
+        "en": "Two teams, live: whoever taps faster pulls it over"
+      }
+    },
+    {
+      "id": "reaction",
+      "title": "Хто швидший",
+      "description": "Тест реакції: п'ять спроб, середнє йде в таблицю чату",
+      "aspect": "1:1",
+      "source": "reaction.jsx",
+      "titles": {
+        "ru": "Кто быстрее",
+        "en": "Who's faster"
+      },
+      "descriptions": {
+        "ru": "Тест реакции: пять попыток, среднее идёт в таблицу чата",
+        "en": "A reaction test: five tries, the average goes on the chat's table"
+      }
+    },
+    {
+      "id": "aquarium",
+      "title": "Акваріум",
+      "description": "Кожен запускає свою рибку, погодувати може будь-хто",
+      "aspect": "1:1",
+      "source": "aquarium.jsx",
+      "titles": {
+        "ru": "Аквариум",
+        "en": "Aquarium"
+      },
+      "descriptions": {
+        "ru": "Каждый запускает свою рыбку, покормить может любой",
+        "en": "Everyone adds a fish, anyone can feed them"
+      }
+    },
+    {
+      "id": "cat-button",
+      "title": "Кіт і кнопка",
+      "description": "Червона кнопка, яку не можна натискати — кожен натиск нова сцена",
+      "aspect": "1:1",
+      "source": "cat-button.jsx",
+      "titles": {
+        "ru": "Кот и кнопка",
+        "en": "The cat and the button"
+      },
+      "descriptions": {
+        "ru": "Красная кнопка, которую нельзя нажимать — каждое нажатие новая сцена",
+        "en": "A red button nobody should press — every press a new scene"
+      }
+    },
+    {
+      "id": "campfire",
+      "title": "Вогнище",
+      "description": "Сядьте біля вогню й підкидайте дров разом",
+      "aspect": "1:1",
+      "source": "campfire.jsx",
+      "titles": {
+        "ru": "Костёр",
+        "en": "Campfire"
+      },
+      "descriptions": {
+        "ru": "Сядьте у костра и подбрасывайте дров вместе",
+        "en": "Sit by the fire and keep it going together"
+      }
+    },
+    {
+      "id": "tamagotchi",
+      "title": "Тамагочі",
+      "description": "Вихованець на весь чат: годуйте й грайтеся по черзі",
+      "aspect": "1:1",
+      "source": "tamagotchi.jsx",
+      "titles": {
+        "ru": "Тамагочи",
+        "en": "Tamagotchi"
+      },
+      "descriptions": {
+        "ru": "Питомец на весь чат: кормите и играйте по очереди",
+        "en": "A pet for the whole chat: take turns feeding and playing"
+      }
+    },
+    {
+      "id": "rps",
+      "title": "Камінь, ножиці, папір",
+      "description": "Хід лежить у конверті, поки суперник не обере — до трьох перемог",
+      "aspect": "1:1",
+      "source": "rps.jsx",
+      "titles": {
+        "ru": "Камень, ножницы, бумага",
+        "en": "Rock, paper, scissors"
+      },
+      "descriptions": {
+        "ru": "Ход лежит в конверте, пока соперник не выберет — до трёх побед",
+        "en": "Your move stays sealed until the other picks — first to three"
+      }
+    },
+    {
+      "id": "sea-battle",
+      "title": "Морський бій",
+      "description": "Флот видно лише вам; телефон сам відповідає «мимо» чи «влучання»",
+      "aspect": "1:1",
+      "source": "sea-battle.jsx",
+      "titles": {
+        "ru": "Морской бой",
+        "en": "Sea battle"
+      },
+      "descriptions": {
+        "ru": "Флот видите только вы; телефон сам отвечает «мимо» или «попадание»",
+        "en": "Only you see your fleet; your phone answers «miss» or «hit» by itself"
+      }
+    }
+  ]
+}

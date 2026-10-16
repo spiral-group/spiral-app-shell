@@ -1,0 +1,17 @@
+node_modules/
+.DS_Store
+*.log
+.vite/
+coverage/
+.swiftpm/
+ios/.build/
+
+# Intermediate build output. The COMMITTED copy is `ios/Sources/dist`, which
+# `pnpm build:ios` refreshes — an iOS build must work from a fresh clone with
+# no Node toolchain, the same way compound-design-tokens and the retired
+# element-call-swift wrapper worked.
+/dist/
+
+# CodeGraph index — local to each machine (see ~/Projects/docs/AGENTS.md).
+.codegraph/
+.ruler/

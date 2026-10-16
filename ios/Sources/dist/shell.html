@@ -1,0 +1,46 @@
+<!doctype html>
+<!--
+Copyright 2026 the Spiral authors. AGPL-3.0-or-later.
+
+Brief 0066 / ADR-0007. The TRUSTED shell document.
+
+Unlike an artifact's document — which the native scheme handler synthesises
+so the app can never control its own <head> — this one is a real file in the
+client bundle, because it is ours. It is loaded once per pooled WKWebView and
+kept warm across many untrusted apps.
+
+It deliberately contains no content: everything visible belongs to the
+sandboxed iframe the shell creates.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Spiral App Shell</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+        /* The app lives in an iframe; nothing here should ever be selectable
+           or draggable, or it competes with the timeline's scroll. */
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+      #spiral-app-root {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+    </style>
+    <script type="module" crossorigin src="./shell.js"></script>
+  </head>
+  <body>
+    <div id="spiral-app-root"></div>
+  </body>
+</html>

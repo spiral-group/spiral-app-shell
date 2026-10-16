@@ -1,0 +1,14 @@
+# Brief 0066 / ADR-0007.
+#
+# `allowBuilds` is an allow-list of packages whose install scripts may run.
+# Same convention the retired element-call fork used
+# (`attic/element-call/pnpm-workspace.yaml`).
+#
+# esbuild is vite's bundler; its postinstall links the platform binary, so a
+# build cannot happen without it. This is OUR build toolchain, chosen and
+# pinned by us — a different trust domain from the artifact dependencies
+# ADR-0007 bans, which are written by a model and would run on our servers.
+allowBuilds:
+  '@google/genai': false
+  esbuild: true
+  protobufjs: false
