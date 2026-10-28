@@ -4,6 +4,7 @@ node_modules/
 .vite/
 coverage/
 .swiftpm/
+.build/
 ios/.build/
 
 # Intermediate build output. The COMMITTED copy is `ios/Sources/dist`, which

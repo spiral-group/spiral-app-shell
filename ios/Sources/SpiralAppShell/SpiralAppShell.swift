@@ -3,6 +3,11 @@
 //
 // Brief 0066 / ADR-0007. Locations inside the shipped bundle.
 //
+// The bundle carries the shell and the runtime only. The first-party test
+// artifacts (the spike's hostile probe, the counter, the conformance harness,
+// the lab and motion pages) are in the `SpiralAppTestArtifacts` product, which
+// only test targets link: App Review 2.5.19, no dormant code in the app.
+//
 // The host never loads these by file URL. It serves them through a
 // `WKURLSchemeHandler` registered for `spiral-app://`, so that every byte the
 // WebView sees is one this package deliberately handed over — and an
@@ -19,7 +24,7 @@ public enum SpiralAppShell {
     /// Version of the shell + runtime pair. Bumped when `dist` is rebuilt;
     /// an artifact's `runtime` field is matched against ``runtimeVersion``,
     /// not against this.
-    public static let version = "1.0.0"
+    public static let version = "1.0.2"
 
     /// Runtime contract an artifact declares in its manifest. A post asking
     /// for a version this build does not carry renders as a native "update
@@ -106,86 +111,5 @@ public enum SpiralAppShell {
         default:
             return nil
         }
-    }
-
-    /// A packed first-party artifact and the digest of its bytes.
-    ///
-    /// The digest is read from disk rather than recomputed so the client and
-    /// the packer cannot drift: if they disagree, the mount refuses, which is
-    /// exactly what it should do.
-    public struct PackedArtifact: Sendable {
-        public let bytes: Data
-        public let digest: String
-    }
-
-    private static func packed(_ name: String) -> PackedArtifact? {
-        guard let container = bundle.url(forResource: name, withExtension: "spiralapp", subdirectory: "dist/artifacts"),
-              let digestFile = bundle.url(forResource: name, withExtension: "sha256", subdirectory: "dist/artifacts"),
-              let bytes = try? Data(contentsOf: container),
-              let digest = try? String(contentsOf: digestFile, encoding: .utf8) else {
-            return nil
-        }
-        return PackedArtifact(bytes: bytes, digest: digest.trimmingCharacters(in: .whitespacesAndNewlines))
-    }
-
-    /// The hostile probe artifact used by the Brief 0066 runtime spike.
-    ///
-    /// Deliberately separate from ``bundledResource(forPath:)`` so it can
-    /// never be reached by a normal request path, and guarded by `DEBUG` so
-    /// no release build can serve an adversary to a user.
-    public static var spikeProbeArtifact: PackedArtifact? {
-        #if DEBUG
-        return packed("probe")
-        #else
-        return nil
-        #endif
-    }
-
-    /// The throwaway counter artifact for the Brief 0066 step 5.1 device
-    /// proof — one button, one number, one `incr`.
-    ///
-    /// Same posture as ``spikeProbeArtifactURL``: unreachable through
-    /// ``bundledResource(forPath:)`` and absent from a release build. It is
-    /// harmless rather than hostile, but it is still first-party scaffolding
-    /// that no user has a reason to be served.
-    public static var sliceCounterArtifact: PackedArtifact? {
-        #if DEBUG
-        return packed("counter")
-        #else
-        return nil
-        #endif
-    }
-
-    /// App 0 — the conformance harness (Brief 0066 § 5.9).
-    ///
-    /// First-party and the regression suite for everything after step 5, so
-    /// unlike the probe and the counter it is expected to outlive the spike.
-    /// Still absent from a release build: it WRITES to whatever post it is
-    /// mounted against, and no user has a reason to be handed that.
-    /// Step 6.11 — the layout lab: every pattern the generator is taught,
-    /// written the way it should be, for the device to measure.
-    public static var labArtifact: PackedArtifact? {
-        #if DEBUG
-        return packed("lab")
-        #else
-        return nil
-        #endif
-    }
-
-    /// Step 6.10 — the motion and layout probe.
-    public static var motionArtifact: PackedArtifact? {
-        #if DEBUG
-        return packed("motion")
-        #else
-        return nil
-        #endif
-    }
-
-    public static var conformanceArtifact: PackedArtifact? {
-        #if DEBUG
-        return packed("conformance")
-        #else
-        return nil
-        #endif
     }
 }

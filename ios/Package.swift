@@ -26,10 +26,17 @@ let package = Package(
         .library(
             name: "SpiralAppShell",
             targets: ["SpiralAppShell"]),
+        // Test targets only: the first-party artifacts never ship in an app.
+        .library(
+            name: "SpiralAppTestArtifacts",
+            targets: ["SpiralAppTestArtifacts"]),
     ],
     targets: [
         .target(
             name: "SpiralAppShell",
             resources: [.copy("../dist")]),
+        .target(
+            name: "SpiralAppTestArtifacts",
+            resources: [.copy("artifacts")]),
     ]
 )

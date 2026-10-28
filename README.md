@@ -31,7 +31,9 @@ src/probe/, src/counter/  the Brief 0066 spike's hostile artifact and the
 catalog/             the 25 catalogue templates (`*.jsx`) + `index.json`
 scripts/             catalog-pack (→ ../matrix-agent-platform/deploy/config/catalog),
                      check-capabilities, ruler, tokens
-ios/                 SwiftPM wrapper carrying dist/ (sibling path dependency)
+ios/                 SwiftPM package: `SpiralAppShell` carries dist/ without the
+                     packed artifacts; `SpiralAppTestArtifacts` carries them for
+                     test targets only, so no app bundle ships them
 android/             reserved and empty; see android/README.md for why
 ```
 
@@ -40,7 +42,7 @@ android/             reserved and empty; see android/README.md for why
 | Command | What it does |
 |---|---|
 | `pnpm build` | typecheck, build the runtime, build artifacts, pack them |
-| `pnpm build:ios` | build, then refresh `ios/Sources/dist` (commit the result) |
+| `pnpm build:ios` | build, then refresh `ios/Sources/dist` and `ios/Sources/SpiralAppTestArtifacts/artifacts` (commit the result) |
 | `pnpm test` | `check-capabilities` (the SDK's exports held equal to the orchestrator's) + every vitest suite — transpile, SDK, fold, pipeline, the catalogue test |
 | `pnpm lint:types` | `tsc --noEmit` |
 | `pnpm verify:layout` | the WebKit layout ruler over the corpus (108 cases) |
@@ -53,8 +55,8 @@ scripts that drive Spiral's closed backend prompts. `pnpm build` and
 `pnpm catalog:pack` read `eval/` or the closed backend, so they do not run
 from the published tree.
 
-`ios/Sources/dist` is generated **and committed**, so an iOS build works from
-a fresh clone with no Node toolchain — the same arrangement
+`ios/Sources/dist` (and the test artifacts beside it) is generated **and
+committed**, so an iOS build works from a fresh clone with no Node toolchain — the same arrangement
 `compound-design-tokens` and the retired `element-call-swift` wrapper used.
 Never hand-edit it: run `pnpm build:ios` and commit the result. The root
 `dist/` is intermediate and ignored.

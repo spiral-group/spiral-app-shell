@@ -1,6 +1,6 @@
 {
   "name": "spiral-app-shell",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "description": "Trusted shell + runtime for Spiral Interactive Posts (Brief 0066, ADR-0007)",
@@ -13,7 +13,7 @@
     "build": "tsc --noEmit && vite build && vite build --config vite.artifact.config.ts && pnpm pack:artifacts",
     "build:runtime": "vite build",
     "build:artifacts": "vite build --config vite.artifact.config.ts",
-    "build:ios": "pnpm build && rm -rf ios/Sources/dist && cp -R dist ios/Sources/dist",
+    "build:ios": "pnpm build && rm -rf ios/Sources/dist ios/Sources/SpiralAppTestArtifacts/artifacts && cp -R dist ios/Sources/dist && mv ios/Sources/dist/artifacts ios/Sources/SpiralAppTestArtifacts/artifacts",
     "dev": "vite",
     "lint:types": "tsc --noEmit",
     "test": "node scripts/check-capabilities.mjs && vitest run",
